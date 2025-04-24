@@ -116,7 +116,7 @@ namespace YJPlcMachine
             /// <param name="address">시작 주소</param>
             /// <param name="length">영역 길이</param>
             /// <returns>요소가 추가되었다면 true, 이미 요소가 있다면 false</returns>
-            internal bool SetScanAddress(string code, int address, int length)
+            internal bool SetScanAddressBlock(string code, int address, int length)
             {
                 bool result = false;
                 int firstAddressBlock = address / SCANSIZE;
@@ -125,9 +125,9 @@ namespace YJPlcMachine
                 for (int i = firstAddressBlock; i <= finalAddressBlock; i++)
                 {
                     int addressBlock = SCANSIZE * i;
-                    if (!IsRegisteredAddress(code, addressBlock))
+                    if (!IsRegisteredAddressBlock(code, addressBlock))
                     {
-                        RegisterAddress(code, addressBlock);
+                        RegisterAddressBlock(code, addressBlock);
                         result = true;
                     }
                 }
@@ -135,14 +135,14 @@ namespace YJPlcMachine
                 return result;
             }
 
-            private bool IsRegisteredAddress(string code, int address)
+            private bool IsRegisteredAddressBlock(string code, int addressBlock)
             {
                 m_lock.EnterWriteLock();
                 try
                 {
-                    if (m_scanCodeAddressDict.TryGetValue(code, out var addressDict) && addressDict.ContainsKey(address))
+                    if (m_scanCodeAddressDict.TryGetValue(code, out var addressDict) && addressDict.ContainsKey(addressBlock))
                     {
-                        addressDict[address] = DateTime.Now;
+                        addressDict[addressBlock] = DateTime.Now;
                         return true;
                     }
                     return false;
@@ -153,15 +153,15 @@ namespace YJPlcMachine
                 }
             }
 
-            private void RegisterAddress(string code, int address)
+            private void RegisterAddressBlock(string code, int addressBlock)
             {
                 m_lock.EnterWriteLock();
                 try
                 {
                     if (!m_scanCodeAddressDict.TryGetValue(code, out _))
                         m_scanCodeAddressDict.Add(code, new Dictionary<int, DateTime>());
-                    if (!m_scanCodeAddressDict[code].TryGetValue(address, out _))
-                        m_scanCodeAddressDict[code].Add(address, DateTime.Now);
+                    if (!m_scanCodeAddressDict[code].TryGetValue(addressBlock, out _))
+                        m_scanCodeAddressDict[code].Add(addressBlock, DateTime.Now);
                 }
                 finally
                 {
@@ -173,9 +173,9 @@ namespace YJPlcMachine
             /// 저장된 영역 리스트를 반환하는 함수.
             /// PlcMachine이 Scan 작업할 때 호출하여 자신이 갱신해야 할 영역 범위를 얻는다.
             /// </summary>
-            /// <param name="code"></param>
-            /// <returns></returns>
-            internal List<int> GetScanAddress(string code)
+            /// <param name="code">영역 코드</param>
+            /// <returns>읽어야하는 영역 범위</returns>
+            internal List<int> GetScanAddressBlock(string code)
             {
                 List<int> addressList = new List<int>();
                 m_lock.EnterReadLock();
@@ -189,6 +189,44 @@ namespace YJPlcMachine
                     m_lock.ExitReadLock();
                 }
                 return addressList;
+            }
+
+            /// <summary>
+            /// 사용되지 않은 오래된 스캔 영역 정보를 제거하는 함수.
+            /// 사용하지 않는데 계속 스캔하고 있을 필요는 없다.
+            /// </summary>
+            /// <param name="expireTimeSpan">해당 기간동안 사용되지 않은 영역 범위를 제거</param>
+            internal void ExpireOldAddressBlock(TimeSpan expireTimeSpan)
+            {
+                DateTime now = DateTime.Now;
+
+                m_lock.EnterWriteLock();
+                try
+                {
+                    List<string> removeCode = new List<string>();
+
+                    foreach (var codePair in m_scanCodeAddressDict)
+                    {
+                        var addressDict = codePair.Value;
+                        List<int> expireAddress = new List<int>();
+                        foreach (var addressPair in addressDict)
+                            if (now - addressPair.Value > expireTimeSpan)
+                                expireAddress.Add(addressPair.Key);
+
+                        foreach (var key in expireAddress)
+                            addressDict.Remove(key);
+
+                        if (addressDict.Count == 0)
+                            removeCode.Add(codePair.Key);
+                    }
+
+                    foreach (var key in removeCode)
+                        m_scanCodeAddressDict.Remove(key);
+                }
+                finally
+                {
+                    m_lock.ExitWriteLock();
+                }
             }
         }
 

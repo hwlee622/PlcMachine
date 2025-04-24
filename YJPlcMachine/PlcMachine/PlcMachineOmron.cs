@@ -50,6 +50,7 @@ namespace YJPlcMachine
         protected async Task ScanTask(CancellationToken token)
         {
             bool isFirstLoop = true;
+            int loopTick = 0;
             while (!token.IsCancellationRequested)
             {
                 try
@@ -57,6 +58,10 @@ namespace YJPlcMachine
                     if (!isFirstLoop)
                         await Task.Delay(20);
                     isFirstLoop = false;
+
+                    loopTick = (loopTick + 1) % 10;
+                    if (loopTick == 0)
+                        m_scanAddressData.ExpireOldAddressBlock(TimeSpan.FromMinutes(10));
 
                     ScanData(DM);
                 }
@@ -69,7 +74,7 @@ namespace YJPlcMachine
 
         private void ScanData(string code)
         {
-            var addressList = m_scanAddressData.GetScanAddress(code);
+            var addressList = m_scanAddressData.GetScanAddressBlock(code);
             for (int i = 0; i < addressList.Count; i++)
             {
                 m_upperLink.GetDMData(addressList[i], ScanAddressData.SCANSIZE, out var data);
@@ -92,7 +97,7 @@ namespace YJPlcMachine
             value = string.Empty;
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            if (m_scanAddressData.SetScanAddress(DM, address, length))
+            if (m_scanAddressData.SetScanAddressBlock(DM, address, length))
                 WaitScanFinish();
 
             ushort[] data = plcData.GetData(address, length);
@@ -113,7 +118,7 @@ namespace YJPlcMachine
             value = 0;
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            if (m_scanAddressData.SetScanAddress(DM, address, 1))
+            if (m_scanAddressData.SetScanAddressBlock(DM, address, 1))
                 WaitScanFinish();
 
             ushort data = plcData.GetData(address, 1)[0];
@@ -125,7 +130,7 @@ namespace YJPlcMachine
             value = 0;
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            if (m_scanAddressData.SetScanAddress(DM, address, 2))
+            if (m_scanAddressData.SetScanAddressBlock(DM, address, 2))
                 WaitScanFinish();
 
             ushort[] data = plcData.GetData(address, 2);
@@ -136,7 +141,7 @@ namespace YJPlcMachine
         {
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddress(DM, address, length);
+            m_scanAddressData.SetScanAddressBlock(DM, address, length);
 
             if (value.Length % 2 != 0)
                 value += '\0';
@@ -158,7 +163,7 @@ namespace YJPlcMachine
         {
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddress(DM, address, 1);
+            m_scanAddressData.SetScanAddressBlock(DM, address, 1);
 
             ushort[] data = new ushort[] { (ushort)value };
             m_upperLink.SetDMData(address, 1, data);
@@ -171,7 +176,7 @@ namespace YJPlcMachine
         {
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddress(DM, address, 2);
+            m_scanAddressData.SetScanAddressBlock(DM, address, 2);
 
             ushort[] data = new ushort[2];
             data[0] = (ushort)(value & 0xFFFF);
