@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UpperLinkInterface;
 
-namespace YJPlcMachine
+namespace PlcMachine
 {
     /// <summary>
     /// Omron PLC 대상으로한 PlcMachine

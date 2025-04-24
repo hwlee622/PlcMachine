@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 
-namespace YJPlcMachine
+namespace PlcMachine
 {
     /// <summary>
     /// 설정된 PLC 영역 값을 주기적으로 갱신하는 클래스.
