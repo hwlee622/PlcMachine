@@ -1,0 +1,49 @@
+﻿namespace YJPlcMachine
+{
+    public class PlcMachineNone : PlcMachine
+    {
+        public override void CreateDevice()
+        {
+        }
+
+        public override void CloseDevice()
+        {
+        }
+
+        public override void GetContactArea(string address, out bool value)
+        {
+            value = false;
+        }
+
+        public override void SetContactArea(string address, bool value, bool waitUpdate = false)
+        {
+        }
+
+        public override void GetDataArea(int address, int length, out string value)
+        {
+            value = string.Empty;
+        }
+
+        public override void GetDataArea(int address, out short value)
+        {
+            value = 0;
+        }
+
+        public override void GetDataArea(int address, out int value)
+        {
+            value = 0;
+        }
+
+        public override void SetDataArea(int address, int length, string value, bool waitUpdate = false)
+        {
+        }
+
+        public override void SetDataArea(int address, short value, bool waitUpdate = false)
+        {
+        }
+
+        public override void SetDataArea(int address, int value, bool waitUpdate = false)
+        {
+        }
+    }
+}
