@@ -50,6 +50,7 @@ namespace YJPlcMachine
         protected async Task ScanTask(CancellationToken token)
         {
             bool isFirstLoop = true;
+            int loopTick = 0;
             while (!token.IsCancellationRequested)
             {
                 try
@@ -57,6 +58,10 @@ namespace YJPlcMachine
                     if (!isFirstLoop)
                         await Task.Delay(20);
                     isFirstLoop = false;
+
+                    loopTick = (loopTick + 1) % 10;
+                    if (loopTick == 0)
+                        m_scanAddressData.ExpireOldScanAddress(TimeSpan.FromMinutes(10));
 
                     ScanData(DM);
                 }
