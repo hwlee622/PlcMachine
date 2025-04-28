@@ -2,6 +2,11 @@
 {
     public class PlcMachineNone : PlcMachine
     {
+        PlcMachineNone()
+        {
+            IsConnected = true;
+        }
+
         public override void CreateDevice()
         {
         }

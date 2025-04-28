@@ -75,10 +75,12 @@ namespace YJPlcMachine
                     if (loopTick == 0)
                         m_scanAddressData.ExpireOldScanAddress(TimeSpan.FromMinutes(10));
 
-                    ScanData(DT);
-                    ScanContact(R);
-                    ScanContact(Y);
-                    ScanContact(X);
+                    bool dtScanResult = ScanData(DT);
+                    bool rScanResult = ScanContact(R);
+                    bool yScanResult = ScanContact(Y);
+                    bool xScanResult = ScanContact(X);
+
+                    IsConnected = dtScanResult && rScanResult && yScanResult && xScanResult;
                 }
                 finally
                 {
@@ -87,26 +89,36 @@ namespace YJPlcMachine
             }
         }
 
-        private void ScanData(string code)
+        private bool ScanData(string code)
         {
+            bool result = true;
             var addressList = m_scanAddressData.GetScanAddress(code);
             for (int i = 0; i < addressList.Count; i++)
             {
-                m_mewtocol.GetDTData(addressList[i], ScanAddressData.SCANSIZE, out ushort[] data);
+                bool scanResult = m_mewtocol.GetDTData(addressList[i], ScanAddressData.SCANSIZE, out ushort[] data);
+                if (!scanResult)
+                    result = false;
+
                 if (m_plcAreaDict.TryGetValue(code, out var plcData))
                     plcData.SetData(addressList[i], data);
             }
+            return result;
         }
 
-        private void ScanContact(string code)
+        private bool ScanContact(string code)
         {
+            bool result = true;
             var addressList = m_scanAddressData.GetScanAddress(code);
             for (int i = 0; i < addressList.Count; i++)
             {
-                m_mewtocol.GetDIOData(code, addressList[i], ScanAddressData.SCANSIZE, out ushort[] data);
+                bool scanResult = m_mewtocol.GetDIOData(code, addressList[i], ScanAddressData.SCANSIZE, out ushort[] data);
+                if (!scanResult)
+                    result = false;
+
                 if (m_plcAreaDict.TryGetValue(code, out var plcData))
                     plcData.SetData(addressList[i], data);
             }
+            return result;
         }
 
         public override void GetContactArea(string address, out bool value)

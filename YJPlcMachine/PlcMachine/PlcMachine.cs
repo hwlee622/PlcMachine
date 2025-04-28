@@ -244,6 +244,7 @@ namespace YJPlcMachine
         public const int MaxDataAreaAddress = 50000;
         public const int MaxContactAddress = 1000;
 
+        public bool IsConnected { get; protected set; } = false;
         public Action OnDataUpdated;
 
         protected readonly Dictionary<string, PlcData> m_plcAreaDict = new Dictionary<string, PlcData>();

@@ -63,7 +63,9 @@ namespace YJPlcMachine
                     if (loopTick == 0)
                         m_scanAddressData.ExpireOldScanAddress(TimeSpan.FromMinutes(10));
 
-                    ScanData(DM);
+                    bool dmScanResult = ScanData(DM);
+
+                    IsConnected = dmScanResult;
                 }
                 finally
                 {
@@ -72,15 +74,20 @@ namespace YJPlcMachine
             }
         }
 
-        private void ScanData(string code)
+        private bool ScanData(string code)
         {
+            bool result = true;
             var addressList = m_scanAddressData.GetScanAddress(code);
             for (int i = 0; i < addressList.Count; i++)
             {
-                m_upperLink.GetDMData(addressList[i], ScanAddressData.SCANSIZE, out var data);
+                bool scanResult = m_upperLink.GetDMData(addressList[i], ScanAddressData.SCANSIZE, out var data);
+                if (!scanResult)
+                    result = false;
+
                 if (m_plcAreaDict.TryGetValue(code, out var plcData))
                     plcData.SetData(addressList[i], data);
             }
+            return result;
         }
 
         public override void GetContactArea(string address, out bool value)
