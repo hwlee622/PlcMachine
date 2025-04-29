@@ -2,7 +2,7 @@
 {
     public class PlcMachineNone : PlcMachine
     {
-        PlcMachineNone()
+        public PlcMachineNone()
         {
             IsConnected = true;
         }

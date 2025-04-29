@@ -104,7 +104,7 @@ namespace PlcMachine
             value = string.Empty;
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            if (m_scanAddressData.SetScanAddressBlock(DM, address, length))
+            if (m_scanAddressData.SetScanAddress(DM, address, length))
                 WaitScanFinish();
 
             ushort[] data = plcData.GetData(address, length);
@@ -125,7 +125,7 @@ namespace PlcMachine
             value = 0;
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            if (m_scanAddressData.SetScanAddressBlock(DM, address, 1))
+            if (m_scanAddressData.SetScanAddress(DM, address, 1))
                 WaitScanFinish();
 
             ushort data = plcData.GetData(address, 1)[0];
@@ -137,7 +137,7 @@ namespace PlcMachine
             value = 0;
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            if (m_scanAddressData.SetScanAddressBlock(DM, address, 2))
+            if (m_scanAddressData.SetScanAddress(DM, address, 2))
                 WaitScanFinish();
 
             ushort[] data = plcData.GetData(address, 2);
@@ -148,7 +148,7 @@ namespace PlcMachine
         {
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddressBlock(DM, address, length);
+            m_scanAddressData.SetScanAddress(DM, address, length);
 
             if (value.Length % 2 != 0)
                 value += '\0';
@@ -170,7 +170,7 @@ namespace PlcMachine
         {
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddressBlock(DM, address, 1);
+            m_scanAddressData.SetScanAddress(DM, address, 1);
 
             ushort[] data = new ushort[] { (ushort)value };
             m_upperLink.SetDMData(address, 1, data);
@@ -183,7 +183,7 @@ namespace PlcMachine
         {
             if (!m_plcAreaDict.TryGetValue(DM, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddressBlock(DM, address, 2);
+            m_scanAddressData.SetScanAddress(DM, address, 2);
 
             ushort[] data = new ushort[2];
             data[0] = (ushort)(value & 0xFFFF);

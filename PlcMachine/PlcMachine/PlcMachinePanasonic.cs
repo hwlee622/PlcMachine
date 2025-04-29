@@ -133,7 +133,7 @@ namespace PlcMachine
 
             if (!m_plcAreaDict.TryGetValue(contactCode, out var plcData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
                 return;
-            if (m_scanAddressData.SetScanAddressBlock(contactCode, contactAddress, 1))
+            if (m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1))
                 WaitScanFinish();
 
             ushort data = plcData.GetData(contactAddress, 1)[0];
@@ -151,7 +151,7 @@ namespace PlcMachine
 
             if (!m_plcAreaDict.TryGetValue(contactCode, out var plcData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
                 return;
-            m_scanAddressData.SetScanAddressBlock(contactCode, contactAddress, 1);
+            m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1);
 
             m_mewtocol.SetDIOData(contactCode, contactAddress, hex, value);
 
@@ -164,7 +164,7 @@ namespace PlcMachine
             value = string.Empty;
             if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
                 return;
-            if (m_scanAddressData.SetScanAddressBlock(DT, address, length))
+            if (m_scanAddressData.SetScanAddress(DT, address, length))
                 WaitScanFinish();
 
             ushort[] data = plcData.GetData(address, length);
@@ -185,7 +185,7 @@ namespace PlcMachine
             value = 0;
             if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
                 return;
-            if (m_scanAddressData.SetScanAddressBlock(DT, address, 1))
+            if (m_scanAddressData.SetScanAddress(DT, address, 1))
                 WaitScanFinish();
 
             ushort data = plcData.GetData(address, 1)[0];
@@ -197,7 +197,7 @@ namespace PlcMachine
             value = 0;
             if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
                 return;
-            if (m_scanAddressData.SetScanAddressBlock(DT, address, 2))
+            if (m_scanAddressData.SetScanAddress(DT, address, 2))
                 WaitScanFinish();
 
             ushort[] data = plcData.GetData(address, 2);
@@ -208,7 +208,7 @@ namespace PlcMachine
         {
             if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddressBlock(DT, address, length);
+            m_scanAddressData.SetScanAddress(DT, address, length);
 
             if (value.Length % 2 != 0)
                 value += '\0';
@@ -230,7 +230,7 @@ namespace PlcMachine
         {
             if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddressBlock(DT, address, 1);
+            m_scanAddressData.SetScanAddress(DT, address, 1);
 
             ushort[] data = new ushort[] { (ushort)value };
             m_mewtocol.SetDTData(address, 1, data);
@@ -243,7 +243,7 @@ namespace PlcMachine
         {
             if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddressBlock(DT, address, 2);
+            m_scanAddressData.SetScanAddress(DT, address, 2);
 
             ushort[] data = new ushort[2];
             data[0] = (ushort)(value & 0xFFFF);

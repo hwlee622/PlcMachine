@@ -133,7 +133,7 @@ namespace PlcMachine
             /// <param name="address">시작 주소</param>
             /// <param name="length">영역 길이</param>
             /// <returns>요소가 추가되었다면 true, 이미 요소가 있다면 false</returns>
-            internal bool SetScanAddressBlock(string code, int address, int length)
+            internal bool SetScanAddress(string code, int address, int length)
             {
                 bool result = false;
                 int firstAddressBlock = address / SCANSIZE;
@@ -142,9 +142,9 @@ namespace PlcMachine
                 for (int i = firstAddressBlock; i <= finalAddressBlock; i++)
                 {
                     int addressBlock = SCANSIZE * i;
-                    if (!IsRegisteredAddressBlock(code, addressBlock))
+                    if (!IsRegisteredAddress(code, addressBlock))
                     {
-                        RegisterAddressBlock(code, addressBlock);
+                        RegisterAddress(code, addressBlock);
                         result = true;
                     }
                 }
@@ -219,9 +219,9 @@ namespace PlcMachine
             /// 저장된 영역 리스트를 반환하는 함수.
             /// PlcMachine이 Scan 작업할 때 호출하여 자신이 갱신해야 할 영역 범위를 얻는다.
             /// </summary>
-            /// <param name="code">영역 코드</param>
-            /// <returns>읽어야하는 영역 범위</returns>
-            internal List<int> GetScanAddressBlock(string code)
+            /// <param name="code"></param>
+            /// <returns></returns>
+            internal List<int> GetScanAddress(string code)
             {
                 List<int> addressList = new List<int>();
                 m_lock.EnterReadLock();
@@ -236,44 +236,6 @@ namespace PlcMachine
                     m_lock.ExitReadLock();
                 }
                 return addressList;
-            }
-
-            /// <summary>
-            /// 사용되지 않은 오래된 스캔 영역 정보를 제거하는 함수.
-            /// 사용하지 않는데 계속 스캔하고 있을 필요는 없다.
-            /// </summary>
-            /// <param name="expireTimeSpan">해당 기간동안 사용되지 않은 영역 범위를 제거</param>
-            internal void ExpireOldAddressBlock(TimeSpan expireTimeSpan)
-            {
-                DateTime now = DateTime.Now;
-
-                m_lock.EnterWriteLock();
-                try
-                {
-                    List<string> removeCode = new List<string>();
-
-                    foreach (var codePair in m_scanCodeAddressDict)
-                    {
-                        var addressDict = codePair.Value;
-                        List<int> expireAddress = new List<int>();
-                        foreach (var addressPair in addressDict)
-                            if (now - addressPair.Value > expireTimeSpan)
-                                expireAddress.Add(addressPair.Key);
-
-                        foreach (var key in expireAddress)
-                            addressDict.Remove(key);
-
-                        if (addressDict.Count == 0)
-                            removeCode.Add(codePair.Key);
-                    }
-
-                    foreach (var key in removeCode)
-                        m_scanCodeAddressDict.Remove(key);
-                }
-                finally
-                {
-                    m_lock.ExitWriteLock();
-                }
             }
         }
 
