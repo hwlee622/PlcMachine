@@ -250,7 +250,7 @@ namespace MewtocolInterface
                 return true;
             }
             else
-                return true;
+                return false;
         }
 
         /// <summary>
