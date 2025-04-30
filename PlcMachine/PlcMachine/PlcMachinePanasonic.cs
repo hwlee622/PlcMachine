@@ -35,10 +35,11 @@ namespace PlcMachine
 
         private PlcMachinePanasonic()
         {
-            m_plcAreaDict[DT] = new PlcData(MaxDataAreaAddress);
-            m_plcAreaDict[R] = new PlcData(MaxContactAddress);
-            m_plcAreaDict[Y] = new PlcData(MaxContactAddress);
-            m_plcAreaDict[X] = new PlcData(MaxContactAddress);
+            m_dataAreaDict[DT] = new DataArea(MaxDataAreaAddress);
+
+            m_contactAreaDict[R] = new ContactArea(MaxContactAddress * 16);
+            m_contactAreaDict[Y] = new ContactArea(MaxContactAddress * 16);
+            m_contactAreaDict[X] = new ContactArea(MaxContactAddress * 16);
         }
 
         public override void CreateDevice()
@@ -55,8 +56,10 @@ namespace PlcMachine
             m_cts.Cancel();
             m_mewtocol.Stop();
 
-            foreach (var plcData in m_plcAreaDict.Values)
-                plcData.ClearData();
+            foreach (var dataArea in m_dataAreaDict.Values)
+                dataArea.ClearData();
+            foreach (var contactArea in m_contactAreaDict.Values)
+                contactArea.ClearData();
         }
 
         protected async Task ScanTask(CancellationToken token)
@@ -97,9 +100,9 @@ namespace PlcMachine
             {
                 bool scanResult = m_mewtocol.GetDTData(addressList[i], ScanAddressData.SCANSIZE, out ushort[] data);
                 if (!scanResult)
-                    result = false;
+                    IsConnected = result = false;
 
-                if (m_plcAreaDict.TryGetValue(code, out var plcData))
+                if (m_dataAreaDict.TryGetValue(code, out var plcData))
                     plcData.SetData(addressList[i], data);
             }
             return result;
@@ -113,17 +116,23 @@ namespace PlcMachine
             {
                 bool scanResult = m_mewtocol.GetDIOData(code, addressList[i], ScanAddressData.SCANSIZE, out ushort[] data);
                 if (!scanResult)
-                    result = false;
+                    IsConnected = result = false;
 
-                if (m_plcAreaDict.TryGetValue(code, out var plcData))
-                    plcData.SetData(addressList[i], data);
+                bool[] value = new bool[data.Length * 16];
+                for (int j = 0; j < data.Length; j++)
+                    for (int k = 0; k < 16; k++)
+                        value[j * 16 + k] = ((data[j] >> k) & 1) == 1;
+
+                if (m_contactAreaDict.TryGetValue(code, out var contactArea))
+                    contactArea.SetData(addressList[i] * 16, value);
             }
             return result;
         }
 
-        public override void GetContactArea(string address, out bool value)
+        public override void GetContactArea(string address, out bool value, out DateTime updatedTime)
         {
             value = false;
+            updatedTime = DateTime.MinValue;
             if (string.IsNullOrEmpty(address) || address.Length < 3)
                 return;
 
@@ -131,13 +140,14 @@ namespace PlcMachine
             string sContactAddress = address.Substring(1, address.Length - 2);
             string sHex = address.Substring(address.Length - 1, 1).ToUpper();
 
-            if (!m_plcAreaDict.TryGetValue(contactCode, out var plcData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
+            if (!m_contactAreaDict.TryGetValue(contactCode, out var contactArea) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
                 return;
             if (m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1))
                 WaitScanFinish();
 
-            ushort data = plcData.GetData(contactAddress, 1)[0];
-            value = ((data >> hex) & 1) == 1;
+            var data = contactArea.GetData(contactAddress * 16 + hex);
+            value = data.Value;
+            updatedTime = data.UpdatedTime;
         }
 
         public override void SetContactArea(string address, bool value, bool waitUpdate = false)
@@ -149,25 +159,35 @@ namespace PlcMachine
             string sContactAddress = address.Substring(1, address.Length - 2);
             string sHex = address.Substring(address.Length - 1, 1).ToUpper();
 
-            if (!m_plcAreaDict.TryGetValue(contactCode, out var plcData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
+            if (!m_contactAreaDict.TryGetValue(contactCode, out var contactArea) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
                 return;
             m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1);
 
-            m_mewtocol.SetDIOData(contactCode, contactAddress, hex, value);
-
+            var task = Task.Run(() => m_mewtocol.SetDIOData(contactCode, contactAddress, hex, value));
             if (waitUpdate)
+            {
+                task.GetAwaiter().GetResult();
                 WaitScanFinish();
+            }
         }
 
-        public override void GetDataArea(int address, int length, out string value)
+        public override void GetDataArea(int address, int length, out string value, out DateTime updatedTime)
         {
             value = string.Empty;
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            updatedTime = DateTime.MinValue;
+            if (!m_dataAreaDict.TryGetValue(DT, out var dataArea))
                 return;
             if (m_scanAddressData.SetScanAddress(DT, address, length))
                 WaitScanFinish();
 
-            ushort[] data = plcData.GetData(address, length);
+            ushort[] data = new ushort[length];
+            for (int i = 0; i < length; i++)
+            {
+                var dataValue = dataArea.GetData(address + i);
+                data[i] = dataValue.Value;
+                updatedTime = dataValue.UpdatedTime > updatedTime ? dataValue.UpdatedTime : updatedTime;
+            }
+
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < data.Length; i++)
             {
@@ -180,33 +200,42 @@ namespace PlcMachine
             value = sb.ToString();
         }
 
-        public override void GetDataArea(int address, out short value)
+        public override void GetDataArea(int address, out short value, out DateTime updatedTime)
         {
             value = 0;
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            updatedTime = DateTime.MinValue;
+            if (!m_dataAreaDict.TryGetValue(DT, out var dataArea))
                 return;
             if (m_scanAddressData.SetScanAddress(DT, address, 1))
                 WaitScanFinish();
 
-            ushort data = plcData.GetData(address, 1)[0];
-            value = (short)data;
+            var dataValue = dataArea.GetData(address);
+            value = (short)dataValue.Value;
+            updatedTime = dataValue.UpdatedTime;
         }
 
-        public override void GetDataArea(int address, out int value)
+        public override void GetDataArea(int address, out int value, out DateTime updatedTime)
         {
             value = 0;
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            updatedTime = DateTime.MinValue;
+            if (!m_dataAreaDict.TryGetValue(DT, out var dataArea))
                 return;
             if (m_scanAddressData.SetScanAddress(DT, address, 2))
                 WaitScanFinish();
 
-            ushort[] data = plcData.GetData(address, 2);
+            ushort[] data = new ushort[2];
+            for (int i = 0; i < 2; i++)
+            {
+                var dataValue = dataArea.GetData(address + i);
+                data[i] = dataValue.Value;
+                updatedTime = dataValue.UpdatedTime > updatedTime ? dataValue.UpdatedTime : updatedTime;
+            }
             value = (data[1] << 16) | data[0];
         }
 
         public override void SetDataArea(int address, int length, string value, bool waitUpdate = false)
         {
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            if (!m_dataAreaDict.TryGetValue(DT, out var dataArea))
                 return;
             m_scanAddressData.SetScanAddress(DT, address, length);
 
@@ -220,28 +249,33 @@ namespace PlcMachine
             for (int i = 0; i < length; i++)
                 data[i] = (ushort)(value[1 + i * 2] << 8 | value[i * 2]);
 
-            m_mewtocol.SetDTData(address, length, data);
-
+            var task = Task.Run(() => m_mewtocol.SetDTData(address, length, data));
             if (waitUpdate)
+            {
+                task.GetAwaiter().GetResult();
                 WaitScanFinish();
+            }
         }
 
         public override void SetDataArea(int address, short value, bool waitUpdate = false)
         {
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            if (!m_dataAreaDict.TryGetValue(DT, out var dataArea))
                 return;
             m_scanAddressData.SetScanAddress(DT, address, 1);
 
             ushort[] data = new ushort[] { (ushort)value };
-            m_mewtocol.SetDTData(address, 1, data);
 
+            var task = Task.Run(() => m_mewtocol.SetDTData(address, 1, data));
             if (waitUpdate)
+            {
+                task.GetAwaiter().GetResult();
                 WaitScanFinish();
+            }
         }
 
         public override void SetDataArea(int address, int value, bool waitUpdate = false)
         {
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            if (!m_dataAreaDict.TryGetValue(DT, out var dataArea))
                 return;
             m_scanAddressData.SetScanAddress(DT, address, 2);
 
@@ -252,6 +286,13 @@ namespace PlcMachine
 
             if (waitUpdate)
                 WaitScanFinish();
+
+            var task = Task.Run(() => m_mewtocol.SetDTData(address, 2, data));
+            if (waitUpdate)
+            {
+                task.GetAwaiter().GetResult();
+                WaitScanFinish();
+            }
         }
     }
 }

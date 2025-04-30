@@ -3,9 +3,9 @@ using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace YJComm
+namespace CommInterface
 {
-    public class CommSerial : Comm
+    public class CommInterfaceSerial : Comm
     {
         private string m_port;
         private int m_baudRate;
@@ -17,23 +17,23 @@ namespace YJComm
 
         #region Constructors
 
-        public CommSerial(string port) : this(port, 9600, Parity.None, 8, StopBits.One)
+        public CommInterfaceSerial(string port) : this(port, 9600, Parity.None, 8, StopBits.One)
         {
         }
 
-        public CommSerial(string port, int baudRate) : this(port, baudRate, Parity.None, 8, StopBits.One)
+        public CommInterfaceSerial(string port, int baudRate) : this(port, baudRate, Parity.None, 8, StopBits.One)
         {
         }
 
-        public CommSerial(string port, int baudRate, Parity parity) : this(port, baudRate, parity, 8, StopBits.One)
+        public CommInterfaceSerial(string port, int baudRate, Parity parity) : this(port, baudRate, parity, 8, StopBits.One)
         {
         }
 
-        public CommSerial(string port, int baudRate, Parity parity, int dataBit) : this(port, baudRate, parity, dataBit, StopBits.One)
+        public CommInterfaceSerial(string port, int baudRate, Parity parity, int dataBit) : this(port, baudRate, parity, dataBit, StopBits.One)
         {
         }
 
-        public CommSerial(string port, int baudRate, Parity parity, int dataBit, StopBits stopBits)
+        public CommInterfaceSerial(string port, int baudRate, Parity parity, int dataBit, StopBits stopBits)
         {
             m_port = port;
             m_baudRate = baudRate;

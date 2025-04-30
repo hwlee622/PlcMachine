@@ -4,9 +4,9 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace YJComm
+namespace CommInterface
 {
-    public class CommTcpListenerSingle : Comm
+    public class CommInterfaceTcpListenerSingle : Comm
     {
         private string m_ipAddress;
         private int m_port;
@@ -17,7 +17,7 @@ namespace YJComm
 
         #region Constructors
 
-        public CommTcpListenerSingle(string ipAddress, int port)
+        public CommInterfaceTcpListenerSingle(string ipAddress, int port)
         {
             m_ipAddress = ipAddress;
             m_port = port;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO.Ports;
 using System.Text;
-using YJComm;
+using CommInterface;
 
 namespace MewtocolInterface
 {
@@ -26,7 +26,7 @@ namespace MewtocolInterface
         {
             m_logWriter = new MewtocolLogWriter(ipAddress, port);
 
-            m_comm = new CommUdp(ipAddress, port);
+            m_comm = new CommInterfaceUdp(ipAddress, port);
             m_comm.SetSTX(Encoding.ASCII.GetBytes(new char[] { '<' }));
             m_comm.SetETX(Encoding.ASCII.GetBytes(new char[] { (char)0x0D }));
             m_comm.OnError += ex => m_logWriter.LogError(ex);
@@ -36,12 +36,10 @@ namespace MewtocolInterface
         {
             m_logWriter = new MewtocolLogWriter(portNumber);
 
-            m_comm = new CommSerial(portNumber, baudRate, parity, dataBit, stopBits);
+            m_comm = new CommInterfaceSerial(portNumber, baudRate, parity, dataBit, stopBits);
             m_comm.SetSTX(Encoding.ASCII.GetBytes(new char[] { '<' }));
             m_comm.SetETX(Encoding.ASCII.GetBytes(new char[] { (char)0x0D }));
             m_comm.OnError += ex => m_logWriter.LogError(ex);
-            m_comm.OnSendLog += bytes => m_logWriter.Log($"Send : {Encoding.ASCII.GetString(bytes)}");
-            m_comm.OnReceiveLog += bytes => m_logWriter.Log($"Recv : {Encoding.ASCII.GetString(bytes)}");
         }
 
         public void Start()

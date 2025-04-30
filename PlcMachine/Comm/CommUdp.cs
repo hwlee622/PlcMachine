@@ -4,9 +4,9 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace YJComm
+namespace CommInterface
 {
-    public class CommUdp : Comm
+    public class CommInterfaceUdp : Comm
     {
         private string m_ipAddress;
         private int m_port;
@@ -15,7 +15,7 @@ namespace YJComm
 
         #region Constructors
 
-        public CommUdp(string ipAddress, int port)
+        public CommInterfaceUdp(string ipAddress, int port)
         {
             m_ipAddress = ipAddress;
             m_port = port;
@@ -28,7 +28,7 @@ namespace YJComm
             Stop();
 
             IPAddress.Parse(m_ipAddress);
-            m_udpClient = new UdpClient();
+            m_udpClient = new UdpClient(0);
 
             base.Start();
         }
@@ -42,7 +42,7 @@ namespace YJComm
 
         public override bool IsConnected()
         {
-            bool isConnected = m_udpClient != null && m_udpClient.Client != null && m_udpClient.Client.Connected;
+            bool isConnected = m_udpClient != null;
             return isConnected;
         }
 
@@ -60,7 +60,7 @@ namespace YJComm
                         continue;
                     else if (!isConnected)
                     {
-                        m_udpClient = new UdpClient();
+                        m_udpClient = new UdpClient(0);
                         m_connectExceptionDict.Clear();
                     }
                 }

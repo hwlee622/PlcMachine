@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO.Ports;
 using System.Text;
-using YJComm;
+using CommInterface;
 
 namespace UpperLinkInterface
 {
@@ -26,7 +26,7 @@ namespace UpperLinkInterface
         {
             m_logWriter = new UpperlinkLogWriter(portNumber);
 
-            m_comm = new CommSerial(portNumber, baudRate, parity, dataBit, stopBits);
+            m_comm = new CommInterfaceSerial(portNumber, baudRate, parity, dataBit, stopBits);
             m_comm.SetSTX(Encoding.ASCII.GetBytes(new char[] { '@' }));
             m_comm.SetETX(Encoding.ASCII.GetBytes(new char[] { '*', (char)0x0D }));
             m_comm.OnError += ex => m_logWriter.LogError(ex);

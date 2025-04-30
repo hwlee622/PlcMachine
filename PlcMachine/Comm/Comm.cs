@@ -5,9 +5,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace YJComm
+namespace CommInterface
 {
-    // Comm 1.0.7
     public abstract class Comm
     {
         public Action<bool> OnConnectedOrDisconnected;
