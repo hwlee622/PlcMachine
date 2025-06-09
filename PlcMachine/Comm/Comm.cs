@@ -88,18 +88,20 @@ namespace CommInterface
         {
             byte[] recvMessage = new byte[0];
             ManualResetEvent recvEvent = new ManualResetEvent(false);
-            Action<byte[]> handler = bytes =>
+
+            void Handler(byte[] bytes)
             {
                 if (recvEvent.WaitOne(0))
                     return;
+
                 recvMessage = bytes;
                 recvEvent.Set();
-            };
+            }
 
             m_sendrecvEvent.WaitOne();
             try
             {
-                OnReceiveMessage += handler;
+                OnReceiveMessage += Handler;
                 SendMessage(sendMessage);
                 if (!recvEvent.WaitOne(ReadTimeout))
                     throw new TimeoutException($"SendReceive Timeout. ReadTimeout : {ReadTimeout}");
@@ -110,7 +112,7 @@ namespace CommInterface
             }
             finally
             {
-                OnReceiveMessage -= handler;
+                OnReceiveMessage -= Handler;
                 m_sendrecvEvent.Set();
             }
             return recvMessage;
