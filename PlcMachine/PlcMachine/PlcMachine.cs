@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace PlcMachine
 {
@@ -18,17 +19,14 @@ namespace PlcMachine
         /// PLC 데이터를 저장하고 관리하는 클래스.
         /// 읽기 작업 쓰기 작업 별로 권한 부여하여 멀티 스레드 환경에서 안전하게 데이터를 관리할 수 있다.
         /// </summary>
-        protected class DataArea
+        protected class PlcData
         {
-            internal DataArea(int length)
+            internal PlcData(int length)
             {
-                DateTime updatedTime = DateTime.Now;
-                m_data = new DataValue[length];
-                for (int i = 0; i < length; i++)
-                    m_data[i] = new DataValue(0, updatedTime);
+                m_data = new ushort[length];
             }
 
-            private DataValue[] m_data;
+            private ushort[] m_data;
             private ReaderWriterLockSlim m_lock = new ReaderWriterLockSlim();
 
             /// <summary>
@@ -38,15 +36,15 @@ namespace PlcMachine
             /// <param name="index">불러올 시작 주소</param>
             /// <param name="length">불러올 길이</param>
             /// <returns>복사된 데이터</returns>
-            internal DataValue GetData(int index)
+            internal ushort[] GetData(int index, int length)
             {
                 m_lock.EnterReadLock();
                 try
                 {
-                    if (index < 0 || index >= m_data.Length)
-                        return new DataValue();
-                    else
-                        return m_data[index];
+                    length = Math.Min(length, m_data.Length - index);
+                    var result = new ushort[length];
+                    Array.Copy(m_data, index, result, 0, length);
+                    return result;
                 }
                 finally
                 {
@@ -66,16 +64,11 @@ namespace PlcMachine
                 m_lock.EnterWriteLock();
                 try
                 {
-                    if (index < 0 || index >= m_data.Length)
-                        return;
-                    if (value == null)
-                        return;
-
-                    DateTime updatedTime = DateTime.Now;
-                    int length = Math.Min(value.Length, m_data.Length - index);
-                    for (int i = 0; i < length; i++)
-                        if (m_data[index + i].Value != value[i])
-                            m_data[index + i] = new DataValue(value[i], updatedTime);
+                    if (value != null)
+                    {
+                        int length = Math.Min(value.Length, m_data.Length - index);
+                        Array.Copy(value, 0, m_data, index, length);
+                    }
                 }
                 finally
                 {
@@ -93,125 +86,14 @@ namespace PlcMachine
                 m_lock.EnterWriteLock();
                 try
                 {
-                    DateTime updatedTime = DateTime.Now;
-                    for (int i = 0; i < m_data.Length; i++)
-                        m_data[i] = new DataValue(0, updatedTime);
+                    int length = m_data.Length;
+                    m_data = new ushort[length];
                 }
                 finally
                 {
                     m_lock.ExitWriteLock();
                 }
             }
-        }
-
-        protected struct DataValue
-        {
-            internal DataValue(ushort value, DateTime updatedTime)
-            {
-                Value = value;
-                UpdatedTime = updatedTime;
-            }
-
-            internal ushort Value;
-            internal DateTime UpdatedTime;
-        }
-
-        protected class ContactArea
-        {
-            internal ContactArea(int length)
-            {
-                DateTime updatedTime = DateTime.Now;
-                m_data = new ContactValue[length];
-                for (int i = 0; i < length; i++)
-                    m_data[i] = new ContactValue(false, updatedTime);
-            }
-
-            private ContactValue[] m_data;
-            private ReaderWriterLockSlim m_lock = new ReaderWriterLockSlim();
-
-            /// <summary>
-            /// 저장된 데이터를 불러오는 함수. 모든 데이터는 복사본으로 제공된다.
-            /// PlcMachine 외부에서 직접 사용해서는 안된다.
-            /// </summary>
-            /// <param name="index">불러올 시작 주소</param>
-            /// <param name="length">불러올 길이</param>
-            /// <returns>복사된 데이터</returns>
-            internal ContactValue GetData(int index)
-            {
-                m_lock.EnterReadLock();
-                try
-                {
-                    if (index < 0 || index >= m_data.Length)
-                        return new ContactValue();
-                    else
-                        return m_data[index];
-                }
-                finally
-                {
-                    m_lock.ExitReadLock();
-                }
-            }
-
-            /// <summary>
-            /// 데이터를 새로 갱신하는 함수.
-            /// PlcMachine 외부에서 사용할 일은 없고, 사용해서도 안된다.
-            /// PlcMachine 내부에서 데이터 갱신용으로 사용.
-            /// </summary>
-            /// <param name="index">저장할 시작 주소</param>
-            /// <param name="value">저장할 데이터</param>
-            internal void SetData(int index, bool[] value)
-            {
-                m_lock.EnterWriteLock();
-                try
-                {
-                    if (index < 0 || index >= m_data.Length)
-                        return;
-                    if (value == null)
-                        return;
-
-                    DateTime updatedTime = DateTime.Now;
-                    int length = Math.Min(value.Length, m_data.Length - index);
-                    for (int i = 0; i < length; i++)
-                        if (m_data[index + i].Value != value[i])
-                            m_data[index + i] = new ContactValue(value[i], updatedTime);
-                }
-                finally
-                {
-                    m_lock.ExitWriteLock();
-                }
-            }
-
-            /// <summary>
-            /// 데이터를 클리어하는 함수.
-            /// PlcMachine이 종료될 경우 호출한다.
-            /// PlcMachine 내부에서 사용하는 함수. 외부에서 사용해서는 안된다.
-            /// </summary>
-            internal void ClearData()
-            {
-                m_lock.EnterWriteLock();
-                try
-                {
-                    DateTime updatedTime = DateTime.Now;
-                    for (int i = 0; i < m_data.Length; i++)
-                        m_data[i] = new ContactValue(false, updatedTime);
-                }
-                finally
-                {
-                    m_lock.ExitWriteLock();
-                }
-            }
-        }
-
-        protected struct ContactValue
-        {
-            internal ContactValue(bool value, DateTime updatedTime)
-            {
-                Value = value;
-                UpdatedTime = updatedTime;
-            }
-
-            internal bool Value;
-            internal DateTime UpdatedTime;
         }
 
         #endregion PlcData
@@ -366,8 +248,7 @@ namespace PlcMachine
         public bool IsConnected { get; protected set; } = false;
         public Action OnDataUpdated;
 
-        protected readonly Dictionary<string, DataArea> m_dataAreaDict = new Dictionary<string, DataArea>();
-        protected readonly Dictionary<string, ContactArea> m_contactAreaDict = new Dictionary<string, ContactArea>();
+        protected readonly Dictionary<string, PlcData> m_plcAreaDict = new Dictionary<string, PlcData>();
         protected readonly ScanAddressData m_scanAddressData = new ScanAddressData();
 
         public abstract void CreateDevice();
@@ -376,74 +257,37 @@ namespace PlcMachine
 
         /// <param name="address">접점 주소</param>
         /// <param name="value">접점 정보</param>
-        public void GetContactArea(string address, out bool value)
-        {
-            GetContactArea(address, out value, out _);
-        }
-
-        /// <param name="address">접점 주소</param>
-        /// <param name="value">접점 정보</param>
-        /// <param name="updatedTime">변경 시간</param>
-        public abstract void GetContactArea(string address, out bool value, out DateTime updatedTime);
+        public abstract void GetContactArea(string address, out bool value);
 
         /// <param name="address">접점 주소</param>
         /// <param name="value">접점 값</param>
-        /// <param name="waitUpdate">적용 값이 정상적으로 적용될 때 까지 대기할지 결정하는 옵션. Set이후 즉각적인 Get 등이 필요할 경우 활성화</param>
-        public abstract void SetContactArea(string address, bool value, bool waitUpdate = false);
+        public abstract void SetContactArea(string address, bool value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="length">영역 길이</param>
         /// <param name="value">ASCII 영역 정보</param>
-        public void GetDataArea(int address, int length, out string value)
-        {
-            GetDataArea(address, length, out value, out _);
-        }
-
-        /// <param name="address">영역 주소</param>
-        /// <param name="length">영역 길이</param>
-        /// <param name="value">ASCII 영역 정보</param>
-        /// <param name="updatedTime">변경 시간</param>
-        public abstract void GetDataArea(int address, int length, out string value, out DateTime updatedTime);
+        public abstract void GetDataArea(int address, int length, out string value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">short 영역 정보</param>
-        public void GetDataArea(int address, out short value)
-        {
-            GetDataArea(address, out value, out _);
-        }
-
-        /// <param name="address">영역 주소</param>
-        /// <param name="value">short 영역 정보</param>
-        /// <param name="updatedTime">변경 시간</param>
-        public abstract void GetDataArea(int address, out short value, out DateTime updatedTime);
+        public abstract void GetDataArea(int address, out short value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">int 영역 정보</param>
-        public void GetDataArea(int address, out int value)
-        {
-            GetDataArea(address, out value, out _);
-        }
-
-        /// <param name="address">영역 주소</param>
-        /// <param name="value">int 영역 정보</param>
-        /// <param name="updatedTime">변경 시간</param>
-        public abstract void GetDataArea(int address, out int value, out DateTime updatedTime);
+        public abstract void GetDataArea(int address, out int value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="length">영역 길이</param>
         /// <param name="value">ASCII 영역 값</param>
-        /// <param name="waitUpdate">적용 값이 정상적으로 적용될 때 까지 대기할지 결정하는 옵션. Set이후 즉각적인 Get 등이 필요할 경우 활성화</param>
-        public abstract void SetDataArea(int address, int length, string value, bool waitUpdate = false);
+        public abstract void SetDataArea(int address, int length, string value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">short 영역 값</param>
-        /// <param name="waitUpdate">적용 값이 정상적으로 적용될 때 까지 대기할지 결정하는 옵션. Set이후 즉각적인 Get 등이 필요할 경우 활성화</param>
-        public abstract void SetDataArea(int address, short value, bool waitUpdate = false);
+        public abstract void SetDataArea(int address, short value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">int 영역 값</param>
-        /// <param name="waitUpdate">적용 값이 정상적으로 적용될 때 까지 대기할지 결정하는 옵션. Set이후 즉각적인 Get 등이 필요할 경우 활성화</param>
-        public abstract void SetDataArea(int address, int value, bool waitUpdate = false);
+        public abstract void SetDataArea(int address, int value);
 
         /// <summary>
         /// 영역 정보가 최신화 될 때까지 대기하는 함수.
@@ -452,22 +296,22 @@ namespace PlcMachine
         protected void WaitScanFinish()
         {
             int scanCount = 0;
-            ManualResetEvent scanFinishedEvent = new ManualResetEvent(false);
-            Action handler = () =>
+            TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+            void Handler()
             {
                 scanCount++;
                 if (scanCount >= 2)
-                    scanFinishedEvent.Set();
-            };
+                    tcs.TrySetResult(true);
+            }
 
             try
             {
-                OnDataUpdated += handler;
-                scanFinishedEvent.WaitOne(5000);
+                OnDataUpdated += Handler;
+                Task.WaitAny(tcs.Task, Task.Delay(5000));
             }
             finally
             {
-                OnDataUpdated -= handler;
+                OnDataUpdated -= Handler;
             }
         }
 
