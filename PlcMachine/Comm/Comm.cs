@@ -26,7 +26,7 @@ namespace CommInterface
         private object m_etxLock = new object();
         private bool m_etxSetted = false;
         private byte[] ETX;
-        private AutoResetEvent m_sendrecvEvent = new AutoResetEvent(true);
+        private object m_sendrecvLock = new object();
 
         protected ConcurrentQueue<byte[]> m_sendQueue = new ConcurrentQueue<byte[]>();
         protected ConcurrentQueue<byte[]> m_recvQueue = new ConcurrentQueue<byte[]>();
@@ -87,33 +87,33 @@ namespace CommInterface
         public byte[] SendReceiveMessage(byte[] sendMessage)
         {
             byte[] recvMessage = new byte[0];
-            ManualResetEvent recvEvent = new ManualResetEvent(false);
+            TaskCompletionSource<byte[]> tcs = new TaskCompletionSource<byte[]>();
 
             void Handler(byte[] bytes)
             {
-                if (recvEvent.WaitOne(0))
-                    return;
-
-                recvMessage = bytes;
-                recvEvent.Set();
+                tcs.TrySetResult(bytes);
             }
 
-            m_sendrecvEvent.WaitOne();
-            try
+            lock (m_sendrecvLock)
             {
-                OnReceiveMessage += Handler;
-                SendMessage(sendMessage);
-                if (!recvEvent.WaitOne(ReadTimeout))
-                    throw new TimeoutException($"SendReceive Timeout. ReadTimeout : {ReadTimeout}");
-            }
-            catch (Exception ex)
-            {
-                OnError?.Invoke(ex);
-            }
-            finally
-            {
-                OnReceiveMessage -= Handler;
-                m_sendrecvEvent.Set();
+                try
+                {
+                    OnReceiveMessage += Handler;
+                    SendMessage(sendMessage);
+                    int completedIndex = Task.WaitAny(tcs.Task, Task.Delay(ReadTimeout));
+                    if (completedIndex == 0)
+                        return tcs.Task.GetAwaiter().GetResult();
+                    else
+                        throw new TimeoutException($"SendReceive Timeout. ReadTimeout : {ReadTimeout}");
+                }
+                catch (Exception ex)
+                {
+                    OnError?.Invoke(ex);
+                }
+                finally
+                {
+                    OnReceiveMessage -= Handler;
+                }
             }
             return recvMessage;
         }
