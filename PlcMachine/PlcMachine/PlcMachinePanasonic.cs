@@ -13,10 +13,11 @@ namespace PlcMachine
     public class PlcMachinePanasonic : PlcMachine
     {
         private const string DT = "DT";
-        private const int MAX_DT_ADDRESS = 50000;
         private const string R = "R";
         private const string Y = "Y";
         private const string X = "X";
+
+        private const int MAX_DT_ADDRESS = 50000;
         private const int MAX_CONTACT_ADDRESS = 1000;
 
         private Mewtocol m_mewtocol;
@@ -38,9 +39,9 @@ namespace PlcMachine
         private PlcMachinePanasonic()
         {
             _wordDataDict[DT] = new WordData(MAX_DT_ADDRESS);
-            _wordDataDict[R] = new WordData(MAX_CONTACT_ADDRESS);
-            _wordDataDict[Y] = new WordData(MAX_CONTACT_ADDRESS);
-            _wordDataDict   [X] = new WordData(MAX_CONTACT_ADDRESS);
+            _bitDataDict[R] = new BitData(MAX_CONTACT_ADDRESS);
+            _bitDataDict[Y] = new BitData(MAX_CONTACT_ADDRESS);
+            _bitDataDict[X] = new BitData(MAX_CONTACT_ADDRESS);
         }
 
         public override void CreateDevice()
@@ -79,12 +80,10 @@ namespace PlcMachine
                     if (loopTick == 0)
                         m_scanAddressData.ExpireOldScanAddress(TimeSpan.FromMinutes(10));
 
-                    bool dtScanResult = ScanData(DT);
-                    bool rScanResult = ScanContact(R);
-                    bool yScanResult = ScanContact(Y);
-                    bool xScanResult = ScanContact(X);
+                    bool dataResult = ScanData();
+                    bool contactResult = ScanContact();
 
-                    IsConnected = dtScanResult && rScanResult && yScanResult && xScanResult;
+                    IsConnected = dataResult && contactResult;
                 }
                 finally
                 {
@@ -93,34 +92,41 @@ namespace PlcMachine
             }
         }
 
-        private bool ScanData(string code)
+        private bool ScanData()
         {
             bool result = true;
-            var addressList = m_scanAddressData.GetScanAddress(code);
-            for (int i = 0; i < addressList.Count; i++)
+            foreach (var key in _wordDataDict.Keys)
             {
-                bool scanResult = m_mewtocol.GetDTData(addressList[i], ScanAddressData.SCANSIZE, out ushort[] data);
-                if (!scanResult)
-                    IsConnected = result = false;
+                var addressList = m_scanAddressData.GetScanAddress(key);
+                foreach (var address in addressList)
+                {
+                    if (!m_mewtocol.GetDTData(address, ScanAddressData.SCANSIZE, out ushort[] data))
+                        result = false;
 
-                if (_wordDataDict.TryGetValue(code, out var wordData))
-                    wordData.SetData(addressList[i], data);
+                    _wordDataDict[key].SetData(address, data);
+                }
             }
             return result;
         }
 
-        private bool ScanContact(string code)
+        private bool ScanContact()
         {
             bool result = true;
-            var addressList = m_scanAddressData.GetScanAddress(code);
-            for (int i = 0; i < addressList.Count; i++)
+            foreach (var key in _bitDataDict.Keys)
             {
-                bool scanResult = m_mewtocol.GetDIOData(code, addressList[i], ScanAddressData.SCANSIZE, out ushort[] data);
-                if (!scanResult)
-                    IsConnected = result = false;
+                var addressList = m_scanAddressData.GetScanAddress(key);
+                foreach (var address in addressList)
+                {
+                    if (!m_mewtocol.GetDIOData(key, address, ScanAddressData.SCANSIZE, out ushort[] data))
+                        result = false;
 
-                if (_wordDataDict.TryGetValue(code, out var wordData))
-                    wordData.SetData(addressList[i], data);
+                    bool[] bitData = new bool[data.Length * 16];
+                    for (int i = 0; i < data.Length; i++)
+                        for (int j = 0; j < 16; j++)
+                            bitData[i * 16 + j] = ((data[i] >> j) & 1) == 1;
+
+                    _bitDataDict[key].SetData(address, bitData);
+                }
             }
             return result;
         }
@@ -135,12 +141,11 @@ namespace PlcMachine
             string sContactAddress = address.Substring(1, address.Length - 2);
             string sHex = address.Substring(address.Length - 1, 1).ToUpper();
 
-            if (!_wordDataDict.TryGetValue(contactCode, out var wordData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
+            if (!_bitDataDict.TryGetValue(contactCode, out var bitData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
                 return;
             m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1);
 
-            ushort data = wordData.GetData(contactAddress, 1)[0];
-            value = ((data >> hex) & 1) == 1;
+            value = bitData.GetData(contactAddress * 16 + hex, 1)[0];
         }
 
         public override void SetContactArea(string address, bool value)
@@ -152,17 +157,12 @@ namespace PlcMachine
             string sContactAddress = address.Substring(1, address.Length - 2);
             string sHex = address.Substring(address.Length - 1, 1).ToUpper();
 
-            if (!_wordDataDict.TryGetValue(contactCode, out var wordData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
+            if (!_bitDataDict.TryGetValue(contactCode, out var bitData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
                 return;
             m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1);
 
             if (m_mewtocol.SetDIOData(contactCode, contactAddress, hex, value))
-            {
-                int mask = 1 << hex;
-                ushort[] data = wordData.GetData(contactAddress, 1);
-                data[0] = value ? (ushort)(data[0] | mask) : (ushort)(data[0] & ~mask);
-                wordData.SetData(contactAddress, data);
-            }
+                bitData.SetData(contactAddress * 16 + hex, new bool[] { value });
         }
 
         public override void GetDataArea(int address, int length, out string value)
