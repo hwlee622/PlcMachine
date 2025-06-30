@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NModbus, Version=3.0.81.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NModbus.3.0.81\lib\net46\NModbus.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -48,7 +51,10 @@
     <Compile Include="Comm\CommUdp.cs" />
     <Compile Include="PlcMachine\MewtocolInterface\Mewtocol.cs" />
     <Compile Include="PlcMachine\MewtocolInterface\MewtocolLogWriter.cs" />
+    <Compile Include="PlcMachine\ModbusInterface\Modbus.cs" />
+    <Compile Include="PlcMachine\ModbusInterface\ModbusLogWriter.cs" />
     <Compile Include="PlcMachine\PlcMachine.cs" />
+    <Compile Include="PlcMachine\PlcMachineModbus.cs" />
     <Compile Include="PlcMachine\PlcMachineNone.cs" />
     <Compile Include="PlcMachine\PlcMachineOmron.cs" />
     <Compile Include="PlcMachine\PlcMachinePanasonic.cs" />
@@ -56,6 +62,8 @@
     <Compile Include="PlcMachine\UpperLinkInterface\UpperlinkLogWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
