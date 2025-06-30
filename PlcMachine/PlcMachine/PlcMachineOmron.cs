@@ -73,16 +73,16 @@ namespace PlcUtil.PlcMachine
             return result;
         }
 
-        public override void GetContactArea(string address, out bool value)
+        public override void GetBitData(string address, out bool value)
         {
             value = false;
         }
 
-        public override void SetContactArea(string address, bool value)
+        public override void SetBitData(string address, bool value)
         {
         }
 
-        public override void GetDataArea(int address, int length, out string value)
+        public override void GetWordData(int address, int length, out string value)
         {
             value = string.Empty;
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
@@ -103,7 +103,7 @@ namespace PlcUtil.PlcMachine
             value = value.Trim('\0');
         }
 
-        public override void GetDataArea(int address, out short value)
+        public override void GetWordData(int address, out short value)
         {
             value = 0;
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
@@ -114,7 +114,7 @@ namespace PlcUtil.PlcMachine
             value = (short)data;
         }
 
-        public override void GetDataArea(int address, out int value)
+        public override void GetWordData(int address, out int value)
         {
             value = 0;
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
@@ -125,7 +125,7 @@ namespace PlcUtil.PlcMachine
             value = (data[1] << 16) | data[0];
         }
 
-        public override void SetDataArea(int address, int length, string value)
+        public override void SetWordData(int address, int length, string value)
         {
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
@@ -145,7 +145,7 @@ namespace PlcUtil.PlcMachine
                 wordData.SetData(address, data);
         }
 
-        public override void SetDataArea(int address, short value)
+        public override void SetWordData(int address, short value)
         {
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
@@ -156,7 +156,7 @@ namespace PlcUtil.PlcMachine
                 wordData.SetData(address, data);
         }
 
-        public override void SetDataArea(int address, int value)
+        public override void SetWordData(int address, int value)
         {
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;

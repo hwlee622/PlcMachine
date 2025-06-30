@@ -338,36 +338,36 @@ namespace PlcUtil.PlcMachine
 
         /// <param name="address">접점 주소</param>
         /// <param name="value">접점 정보</param>
-        public abstract void GetContactArea(string address, out bool value);
+        public abstract void GetBitData(string address, out bool value);
 
         /// <param name="address">접점 주소</param>
         /// <param name="value">접점 값</param>
-        public abstract void SetContactArea(string address, bool value);
+        public abstract void SetBitData(string address, bool value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="length">영역 길이</param>
         /// <param name="value">ASCII 영역 정보</param>
-        public abstract void GetDataArea(int address, int length, out string value);
+        public abstract void GetWordData(int address, int length, out string value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">short 영역 정보</param>
-        public abstract void GetDataArea(int address, out short value);
+        public abstract void GetWordData(int address, out short value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">int 영역 정보</param>
-        public abstract void GetDataArea(int address, out int value);
+        public abstract void GetWordData(int address, out int value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="length">영역 길이</param>
         /// <param name="value">ASCII 영역 값</param>
-        public abstract void SetDataArea(int address, int length, string value);
+        public abstract void SetWordData(int address, int length, string value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">short 영역 값</param>
-        public abstract void SetDataArea(int address, short value);
+        public abstract void SetWordData(int address, short value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">int 영역 값</param>
-        public abstract void SetDataArea(int address, int value);
+        public abstract void SetWordData(int address, int value);
     }
 }
