@@ -304,6 +304,38 @@ namespace PlcMachine
 
         public abstract void CloseDevice();
 
+        protected async void ScanDevice(CancellationToken token)
+        {
+            bool isFirstLoop = true;
+            int loopTick = 0;
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    if (!isFirstLoop)
+                        await Task.Delay(20);
+                    isFirstLoop = false;
+
+                    loopTick = (loopTick + 1) % 10;
+                    if (loopTick == 0)
+                        m_scanAddressData.ExpireOldScanAddress(TimeSpan.FromMinutes(10));
+
+                    bool bitScanResult = ScanBitData();
+                    bool wordScanResult = ScanWordData();
+
+                    IsConnected = bitScanResult && wordScanResult;
+                }
+                finally
+                {
+                    OnDataUpdated?.Invoke();
+                }
+            }
+        }
+
+        protected abstract bool ScanBitData();
+
+        protected abstract bool ScanWordData();
+
         /// <param name="address">접점 주소</param>
         /// <param name="value">접점 정보</param>
         public abstract void GetContactArea(string address, out bool value);

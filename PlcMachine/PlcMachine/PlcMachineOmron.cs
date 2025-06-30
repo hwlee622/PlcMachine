@@ -36,7 +36,7 @@ namespace PlcMachine
 
             m_upperLink.Start();
             m_cts = new CancellationTokenSource();
-            Task.Run(() => ScanTask(m_cts.Token));
+            Task.Run(() => ScanDevice(m_cts.Token));
         }
 
         public override void CloseDevice()
@@ -50,45 +50,24 @@ namespace PlcMachine
                 wordData.ClearData();
         }
 
-        protected async Task ScanTask(CancellationToken token)
+        protected override bool ScanBitData()
         {
-            bool isFirstLoop = true;
-            int loopTick = 0;
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    if (!isFirstLoop)
-                        await Task.Delay(20);
-                    isFirstLoop = false;
-
-                    loopTick = (loopTick + 1) % 10;
-                    if (loopTick == 0)
-                        m_scanAddressData.ExpireOldScanAddress(TimeSpan.FromMinutes(10));
-
-                    bool dmScanResult = ScanData(DM);
-
-                    IsConnected = dmScanResult;
-                }
-                finally
-                {
-                    OnDataUpdated?.Invoke();
-                }
-            }
+            return true;
         }
 
-        private bool ScanData(string code)
+        protected override bool ScanWordData()
         {
             bool result = true;
-            var addressList = m_scanAddressData.GetScanAddress(code);
-            for (int i = 0; i < addressList.Count; i++)
+            foreach (var key in _wordDataDict.Keys)
             {
-                bool scanResult = m_upperLink.GetDMData(addressList[i], ScanAddressData.SCANSIZE, out var data);
-                if (!scanResult)
-                    IsConnected = result = false;
+                var addressList = m_scanAddressData.GetScanAddress(key);
+                foreach (var address in addressList)
+                {
+                    if (!m_upperLink.GetDMData(address, ScanAddressData.SCANSIZE, out ushort[] data))
+                        result = false;
 
-                if (_wordDataDict.TryGetValue(code, out var wordData))
-                    wordData.SetData(addressList[i], data);
+                    _wordDataDict[key].SetData(address, data);
+                }
             }
             return result;
         }

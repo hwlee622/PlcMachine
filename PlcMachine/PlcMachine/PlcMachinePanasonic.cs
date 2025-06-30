@@ -50,7 +50,7 @@ namespace PlcMachine
 
             m_mewtocol.Start();
             m_cts = new CancellationTokenSource();
-            Task.Run(() => ScanTask(m_cts.Token));
+            Task.Run(() => ScanDevice(m_cts.Token));
         }
 
         public override void CloseDevice()
@@ -64,52 +64,7 @@ namespace PlcMachine
                 wordData.ClearData();
         }
 
-        protected async Task ScanTask(CancellationToken token)
-        {
-            bool isFirstLoop = true;
-            int loopTick = 0;
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    if (!isFirstLoop)
-                        await Task.Delay(20);
-                    isFirstLoop = false;
-
-                    loopTick = (loopTick + 1) % 10;
-                    if (loopTick == 0)
-                        m_scanAddressData.ExpireOldScanAddress(TimeSpan.FromMinutes(10));
-
-                    bool dataResult = ScanData();
-                    bool contactResult = ScanContact();
-
-                    IsConnected = dataResult && contactResult;
-                }
-                finally
-                {
-                    OnDataUpdated?.Invoke();
-                }
-            }
-        }
-
-        private bool ScanData()
-        {
-            bool result = true;
-            foreach (var key in _wordDataDict.Keys)
-            {
-                var addressList = m_scanAddressData.GetScanAddress(key);
-                foreach (var address in addressList)
-                {
-                    if (!m_mewtocol.GetDTData(address, ScanAddressData.SCANSIZE, out ushort[] data))
-                        result = false;
-
-                    _wordDataDict[key].SetData(address, data);
-                }
-            }
-            return result;
-        }
-
-        private bool ScanContact()
+        protected override bool ScanBitData()
         {
             bool result = true;
             foreach (var key in _bitDataDict.Keys)
@@ -126,6 +81,23 @@ namespace PlcMachine
                             bitData[i * 16 + j] = ((data[i] >> j) & 1) == 1;
 
                     _bitDataDict[key].SetData(address, bitData);
+                }
+            }
+            return result;
+        }
+
+        protected override bool ScanWordData()
+        {
+            bool result = true;
+            foreach (var key in _wordDataDict.Keys)
+            {
+                var addressList = m_scanAddressData.GetScanAddress(key);
+                foreach (var address in addressList)
+                {
+                    if (!m_mewtocol.GetDTData(address, ScanAddressData.SCANSIZE, out ushort[] data))
+                        result = false;
+
+                    _wordDataDict[key].SetData(address, data);
                 }
             }
             return result;
