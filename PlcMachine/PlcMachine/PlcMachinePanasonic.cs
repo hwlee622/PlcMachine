@@ -18,7 +18,7 @@ namespace PlcUtil.PlcMachine
         private const string X = "X";
 
         private const int MAX_DT_ADDRESS = 50000;
-        private const int MAX_CONTACT_ADDRESS = 1000;
+        private const int MAX_CONTACT_ADDRESS = 16000;
         private const int SCAN_SIZE = 250;
 
         private Mewtocol m_mewtocol;
@@ -81,7 +81,7 @@ namespace PlcUtil.PlcMachine
                         for (int j = 0; j < 16; j++)
                             bitData[i * 16 + j] = ((data[i] >> j) & 1) == 1;
 
-                    _bitDataDict[key].SetData(address, bitData);
+                    _bitDataDict[key].SetData(address * 16, bitData);
                 }
             }
             return result;
