@@ -15,6 +15,16 @@
         {
         }
 
+        protected override bool ScanBitData()
+        {
+            return true;
+        }
+
+        protected override bool ScanWordData()
+        {
+            return true;
+        }
+
         public override void GetContactArea(string address, out bool value)
         {
             value = false;

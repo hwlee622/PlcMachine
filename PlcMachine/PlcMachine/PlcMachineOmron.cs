@@ -14,6 +14,7 @@ namespace PlcMachine
     {
         private const string DM = "DM";
         private const int MAX_DM_ADDRESS = 50000;
+        private const int SCAN_SIZE = 250;
 
         private Upperlink m_upperLink;
 
@@ -63,7 +64,7 @@ namespace PlcMachine
                 var addressList = m_scanAddressData.GetScanAddress(key);
                 foreach (var address in addressList)
                 {
-                    if (!m_upperLink.GetDMData(address, ScanAddressData.SCANSIZE, out ushort[] data))
+                    if (!m_upperLink.GetDMData(address, SCAN_SIZE, out ushort[] data))
                         result = false;
 
                     _wordDataDict[key].SetData(address, data);
@@ -86,7 +87,7 @@ namespace PlcMachine
             value = string.Empty;
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
-            m_scanAddressData.SetScanAddress(DM, address, length);
+            m_scanAddressData.SetScanAddress(DM, address, length, SCAN_SIZE);
 
             ushort[] data = wordData.GetData(address, length);
             StringBuilder sb = new StringBuilder();
@@ -107,7 +108,7 @@ namespace PlcMachine
             value = 0;
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
-            m_scanAddressData.SetScanAddress(DM, address, 1);
+            m_scanAddressData.SetScanAddress(DM, address, 1, SCAN_SIZE);
 
             ushort data = wordData.GetData(address, 1)[0];
             value = (short)data;
@@ -118,7 +119,7 @@ namespace PlcMachine
             value = 0;
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
-            m_scanAddressData.SetScanAddress(DM, address, 2);
+            m_scanAddressData.SetScanAddress(DM, address, 2, SCAN_SIZE);
 
             ushort[] data = wordData.GetData(address, 2);
             value = (data[1] << 16) | data[0];
@@ -128,7 +129,7 @@ namespace PlcMachine
         {
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
-            m_scanAddressData.SetScanAddress(DM, address, length);
+            m_scanAddressData.SetScanAddress(DM, address, length, SCAN_SIZE);
 
             if (value.Length % 2 != 0)
                 value += '\0';
@@ -148,7 +149,7 @@ namespace PlcMachine
         {
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
-            m_scanAddressData.SetScanAddress(DM, address, 1);
+            m_scanAddressData.SetScanAddress(DM, address, 1, SCAN_SIZE);
 
             ushort[] data = new ushort[] { (ushort)value };
             if (m_upperLink.SetDMData(address, 1, data))
@@ -159,7 +160,7 @@ namespace PlcMachine
         {
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
-            m_scanAddressData.SetScanAddress(DM, address, 2);
+            m_scanAddressData.SetScanAddress(DM, address, 2, SCAN_SIZE);
 
             ushort[] data = new ushort[2];
             data[0] = (ushort)(value & 0xFFFF);

@@ -173,7 +173,6 @@ namespace PlcMachine
                 }
             }
 
-            internal const int SCANSIZE = 250;
             private readonly Dictionary<string, Dictionary<int, ScanBlock>> m_scanBlockDict = new Dictionary<string, Dictionary<int, ScanBlock>>();
             private ReaderWriterLockSlim m_lock = new ReaderWriterLockSlim();
 
@@ -183,16 +182,17 @@ namespace PlcMachine
             /// <param name="code">영역 코드</param>
             /// <param name="address">시작 주소</param>
             /// <param name="length">영역 길이</param>
+            /// <param name="scanSize">스캔할 길이</param>
             /// <returns>요소가 추가되었다면 true, 이미 요소가 있다면 false</returns>
-            internal bool SetScanAddress(string code, int address, int length)
+            internal bool SetScanAddress(string code, int address, int length, int scanSize)
             {
                 bool result = false;
-                int firstAddressBlock = address / SCANSIZE;
-                int finalAddressBlock = (address + length - 1) / SCANSIZE;
+                int firstAddressBlock = address / scanSize;
+                int finalAddressBlock = (address + length - 1) / scanSize;
 
                 for (int i = firstAddressBlock; i <= finalAddressBlock; i++)
                 {
-                    int addressBlock = SCANSIZE * i;
+                    int addressBlock = scanSize * i;
                     if (!IsRegisteredAddress(code, addressBlock))
                     {
                         RegisterAddress(code, addressBlock);
