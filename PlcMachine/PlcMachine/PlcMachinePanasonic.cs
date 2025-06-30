@@ -13,9 +13,11 @@ namespace PlcMachine
     public class PlcMachinePanasonic : PlcMachine
     {
         private const string DT = "DT";
+        private const int MAX_DT_ADDRESS = 50000;
         private const string R = "R";
         private const string Y = "Y";
         private const string X = "X";
+        private const int MAX_CONTACT_ADDRESS = 1000;
 
         private Mewtocol m_mewtocol;
 
@@ -35,10 +37,10 @@ namespace PlcMachine
 
         private PlcMachinePanasonic()
         {
-            m_plcAreaDict[DT] = new PlcData(MaxDataAreaAddress);
-            m_plcAreaDict[R] = new PlcData(MaxContactAddress);
-            m_plcAreaDict[Y] = new PlcData(MaxContactAddress);
-            m_plcAreaDict[X] = new PlcData(MaxContactAddress);
+            _wordDataDict[DT] = new WordData(MAX_DT_ADDRESS);
+            _wordDataDict[R] = new WordData(MAX_CONTACT_ADDRESS);
+            _wordDataDict[Y] = new WordData(MAX_CONTACT_ADDRESS);
+            _wordDataDict   [X] = new WordData(MAX_CONTACT_ADDRESS);
         }
 
         public override void CreateDevice()
@@ -55,8 +57,10 @@ namespace PlcMachine
             m_cts.Cancel();
             m_mewtocol.Stop();
 
-            foreach (var plcData in m_plcAreaDict.Values)
-                plcData.ClearData();
+            foreach (var bitData in _bitDataDict.Values)
+                bitData.ClearData();
+            foreach (var wordData in _wordDataDict.Values)
+                wordData.ClearData();
         }
 
         protected async Task ScanTask(CancellationToken token)
@@ -99,8 +103,8 @@ namespace PlcMachine
                 if (!scanResult)
                     IsConnected = result = false;
 
-                if (m_plcAreaDict.TryGetValue(code, out var plcData))
-                    plcData.SetData(addressList[i], data);
+                if (_wordDataDict.TryGetValue(code, out var wordData))
+                    wordData.SetData(addressList[i], data);
             }
             return result;
         }
@@ -115,8 +119,8 @@ namespace PlcMachine
                 if (!scanResult)
                     IsConnected = result = false;
 
-                if (m_plcAreaDict.TryGetValue(code, out var plcData))
-                    plcData.SetData(addressList[i], data);
+                if (_wordDataDict.TryGetValue(code, out var wordData))
+                    wordData.SetData(addressList[i], data);
             }
             return result;
         }
@@ -131,11 +135,11 @@ namespace PlcMachine
             string sContactAddress = address.Substring(1, address.Length - 2);
             string sHex = address.Substring(address.Length - 1, 1).ToUpper();
 
-            if (!m_plcAreaDict.TryGetValue(contactCode, out var plcData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
+            if (!_wordDataDict.TryGetValue(contactCode, out var wordData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
                 return;
             m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1);
 
-            ushort data = plcData.GetData(contactAddress, 1)[0];
+            ushort data = wordData.GetData(contactAddress, 1)[0];
             value = ((data >> hex) & 1) == 1;
         }
 
@@ -148,27 +152,27 @@ namespace PlcMachine
             string sContactAddress = address.Substring(1, address.Length - 2);
             string sHex = address.Substring(address.Length - 1, 1).ToUpper();
 
-            if (!m_plcAreaDict.TryGetValue(contactCode, out var plcData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
+            if (!_wordDataDict.TryGetValue(contactCode, out var wordData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
                 return;
             m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1);
 
             if (m_mewtocol.SetDIOData(contactCode, contactAddress, hex, value))
             {
                 int mask = 1 << hex;
-                ushort[] data = plcData.GetData(contactAddress, 1);
+                ushort[] data = wordData.GetData(contactAddress, 1);
                 data[0] = value ? (ushort)(data[0] | mask) : (ushort)(data[0] & ~mask);
-                plcData.SetData(contactAddress, data);
+                wordData.SetData(contactAddress, data);
             }
         }
 
         public override void GetDataArea(int address, int length, out string value)
         {
             value = string.Empty;
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            if (!_wordDataDict.TryGetValue(DT, out var wordData))
                 return;
             m_scanAddressData.SetScanAddress(DT, address, length);
 
-            ushort[] data = plcData.GetData(address, length);
+            ushort[] data = wordData.GetData(address, length);
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < data.Length; i++)
             {
@@ -185,28 +189,28 @@ namespace PlcMachine
         public override void GetDataArea(int address, out short value)
         {
             value = 0;
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            if (!_wordDataDict.TryGetValue(DT, out var wordData))
                 return;
             m_scanAddressData.SetScanAddress(DT, address, 1);
 
-            ushort data = plcData.GetData(address, 1)[0];
+            ushort data = wordData.GetData(address, 1)[0];
             value = (short)data;
         }
 
         public override void GetDataArea(int address, out int value)
         {
             value = 0;
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            if (!_wordDataDict.TryGetValue(DT, out var wordData))
                 return;
             m_scanAddressData.SetScanAddress(DT, address, 2);
 
-            ushort[] data = plcData.GetData(address, 2);
+            ushort[] data = wordData.GetData(address, 2);
             value = (data[1] << 16) | data[0];
         }
 
         public override void SetDataArea(int address, int length, string value)
         {
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            if (!_wordDataDict.TryGetValue(DT, out var wordData))
                 return;
             m_scanAddressData.SetScanAddress(DT, address, length);
 
@@ -221,23 +225,23 @@ namespace PlcMachine
                 data[i] = (ushort)(value[1 + i * 2] << 8 | value[i * 2]);
 
             if (m_mewtocol.SetDTData(address, length, data))
-                plcData.SetData(address, data);
+                wordData.SetData(address, data);
         }
 
         public override void SetDataArea(int address, short value)
         {
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            if (!_wordDataDict.TryGetValue(DT, out var wordData))
                 return;
             m_scanAddressData.SetScanAddress(DT, address, 1);
 
             ushort[] data = new ushort[] { (ushort)value };
             if (m_mewtocol.SetDTData(address, 1, data))
-                plcData.SetData(address, data);
+                wordData.SetData(address, data);
         }
 
         public override void SetDataArea(int address, int value)
         {
-            if (!m_plcAreaDict.TryGetValue(DT, out var plcData))
+            if (!_wordDataDict.TryGetValue(DT, out var wordData))
                 return;
             m_scanAddressData.SetScanAddress(DT, address, 2);
 
@@ -245,7 +249,21 @@ namespace PlcMachine
             data[0] = (ushort)(value & 0xFFFF);
             data[1] = (ushort)((value >> 16) & 0xFFFF);
             if (m_mewtocol.SetDTData(address, 2, data))
-                plcData.SetData(address, data);
+                wordData.SetData(address, data);
+        }
+
+        protected bool TryParseHexToInt(string hex, out int value)
+        {
+            value = 0;
+            try
+            {
+                value = Convert.ToInt16(hex, 16);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

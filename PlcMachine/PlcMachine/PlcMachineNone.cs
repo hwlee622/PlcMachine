@@ -1,4 +1,4 @@
-﻿namespace YJPlcMachine
+﻿namespace PlcMachine
 {
     public class PlcMachineNone : PlcMachine
     {

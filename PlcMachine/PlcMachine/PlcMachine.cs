@@ -13,90 +13,140 @@ namespace PlcMachine
     /// </summary>
     public abstract class PlcMachine
     {
-        #region PlcData
+        #region BitData
 
-        /// <summary>
-        /// PLC 데이터를 저장하고 관리하는 클래스.
-        /// 읽기 작업 쓰기 작업 별로 권한 부여하여 멀티 스레드 환경에서 안전하게 데이터를 관리할 수 있다.
-        /// </summary>
-        protected class PlcData
+        protected class BitData
         {
-            internal PlcData(int length)
+            /// <summary>
+            /// 1bit 데이터를 관리하는 클래스
+            /// </summary>
+            /// <param name="length"></param>
+            internal BitData(int length)
             {
-                m_data = new ushort[length];
+                _data = new bool[length];
             }
 
-            private ushort[] m_data;
-            private ReaderWriterLockSlim m_lock = new ReaderWriterLockSlim();
+            private bool[] _data;
+            private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-            /// <summary>
-            /// 저장된 데이터를 불러오는 함수. 모든 데이터는 복사본으로 제공된다.
-            /// PlcMachine 외부에서 직접 사용해서는 안된다.
-            /// </summary>
-            /// <param name="index">불러올 시작 주소</param>
-            /// <param name="length">불러올 길이</param>
-            /// <returns>복사된 데이터</returns>
-            internal ushort[] GetData(int index, int length)
+            internal bool[] GetData(int index, int length)
             {
-                m_lock.EnterReadLock();
+                _lock.EnterReadLock();
                 try
                 {
-                    length = Math.Min(length, m_data.Length - index);
-                    var result = new ushort[length];
-                    Array.Copy(m_data, index, result, 0, length);
-                    return result;
+                    var data = new bool[length];
+                    if (index >= _data.Length)
+                        return data;
+
+                    length = Math.Min(length, _data.Length - index);
+                    Array.Copy(_data, index, data, 0, length);
+                    return data;
                 }
                 finally
                 {
-                    m_lock.ExitReadLock();
+                    _lock.ExitReadLock();
                 }
             }
 
-            /// <summary>
-            /// 데이터를 새로 갱신하는 함수.
-            /// PlcMachine 외부에서 사용할 일은 없고, 사용해서도 안된다.
-            /// PlcMachine 내부에서 데이터 갱신용으로 사용.
-            /// </summary>
-            /// <param name="index">저장할 시작 주소</param>
-            /// <param name="value">저장할 데이터</param>
-            internal void SetData(int index, ushort[] value)
+            internal void SetData(int index, bool[] data)
             {
-                m_lock.EnterWriteLock();
+                _lock.EnterWriteLock();
                 try
                 {
-                    if (value != null)
-                    {
-                        int length = Math.Min(value.Length, m_data.Length - index);
-                        Array.Copy(value, 0, m_data, index, length);
-                    }
+                    if (data == null || index >= _data.Length)
+                        return;
+
+                    int length = Math.Min(data.Length, _data.Length - index);
+                    Array.Copy(data, 0, _data, index, length);
                 }
                 finally
                 {
-                    m_lock.ExitWriteLock();
+                    _lock.ExitWriteLock();
                 }
             }
 
-            /// <summary>
-            /// 데이터를 클리어하는 함수.
-            /// PlcMachine이 종료될 경우 호출한다.
-            /// PlcMachine 내부에서 사용하는 함수. 외부에서 사용해서는 안된다.
-            /// </summary>
             internal void ClearData()
             {
-                m_lock.EnterWriteLock();
+                _lock.EnterWriteLock();
                 try
                 {
-                    int length = m_data.Length;
-                    m_data = new ushort[length];
+                    _data = new bool[_data.Length];
                 }
                 finally
                 {
-                    m_lock.ExitWriteLock();
+                    _lock.ExitWriteLock();
                 }
             }
         }
 
-        #endregion PlcData
+        #endregion BitData
+
+        #region WordData
+
+        /// <summary>
+        /// 2byte 데이터를 관리하는 클래스
+        /// </summary>
+        protected class WordData
+        {
+            internal WordData(int length)
+            {
+                _data = new ushort[length];
+            }
+
+            private ushort[] _data;
+            private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+
+            internal ushort[] GetData(int index, int length)
+            {
+                _lock.EnterReadLock();
+                try
+                {
+                    var data = new ushort[length];
+                    if (index >= _data.Length)
+                        return data;
+
+                    length = Math.Min(length, _data.Length - index);
+                    Array.Copy(_data, index, data, 0, length);
+                    return data;
+                }
+                finally
+                {
+                    _lock.ExitReadLock();
+                }
+            }
+
+            internal void SetData(int index, ushort[] data)
+            {
+                _lock.EnterWriteLock();
+                try
+                {
+                    if (data == null || index >= _data.Length)
+                        return;
+
+                    int length = Math.Min(data.Length, _data.Length - index);
+                    Array.Copy(data, 0, _data, index, length);
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+            }
+
+            internal void ClearData()
+            {
+                _lock.EnterWriteLock();
+                try
+                {
+                    _data = new ushort[_data.Length];
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+            }
+        }
+
+        #endregion WordData
 
         #region ScanAddressData
 
@@ -242,14 +292,13 @@ namespace PlcMachine
 
         #endregion ScanAddressData
 
-        public const int MaxDataAreaAddress = 50000;
-        public const int MaxContactAddress = 1000;
-
         public bool IsConnected { get; protected set; } = false;
         public Action OnDataUpdated;
 
-        protected readonly Dictionary<string, PlcData> m_plcAreaDict = new Dictionary<string, PlcData>();
         protected readonly ScanAddressData m_scanAddressData = new ScanAddressData();
+
+        protected readonly Dictionary<string, BitData> _bitDataDict = new Dictionary<string, BitData>();
+        protected readonly Dictionary<string, WordData> _wordDataDict = new Dictionary<string, WordData>();
 
         public abstract void CreateDevice();
 
@@ -288,45 +337,5 @@ namespace PlcMachine
         /// <param name="address">영역 주소</param>
         /// <param name="value">int 영역 값</param>
         public abstract void SetDataArea(int address, int value);
-
-        /// <summary>
-        /// 영역 정보가 최신화 될 때까지 대기하는 함수.
-        /// OnDataUpdated 한번 확인하는 것은 함수 발생 시점에 따라 신뢰성이 없을 수 있으니 두번 확인한다.
-        /// </summary>
-        protected void WaitScanFinish()
-        {
-            int scanCount = 0;
-            TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
-            void Handler()
-            {
-                scanCount++;
-                if (scanCount >= 2)
-                    tcs.TrySetResult(true);
-            }
-
-            try
-            {
-                OnDataUpdated += Handler;
-                Task.WaitAny(tcs.Task, Task.Delay(5000));
-            }
-            finally
-            {
-                OnDataUpdated -= Handler;
-            }
-        }
-
-        protected bool TryParseHexToInt(string hex, out int value)
-        {
-            value = 0;
-            try
-            {
-                value = Convert.ToInt16(hex, 16);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
     }
 }
