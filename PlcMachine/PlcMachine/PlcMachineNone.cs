@@ -1,4 +1,4 @@
-﻿namespace PlcMachine
+﻿namespace PlcUtil.PlcMachine
 {
     public class PlcMachineNone : PlcMachine
     {

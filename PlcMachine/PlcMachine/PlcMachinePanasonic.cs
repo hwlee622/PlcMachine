@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PlcMachine
+namespace PlcUtil.PlcMachine
 {
     /// <summary>
     /// 파나소닉 PLC 대상으로 한 PlcMachine
