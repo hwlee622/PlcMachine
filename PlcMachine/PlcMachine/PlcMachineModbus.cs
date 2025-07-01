@@ -9,7 +9,7 @@ namespace PlcUtil.PlcMachine
     /// <summary>
     /// Modbus 대상으로 한 PlcMachine
     /// </summary>
-    public class PlcMachineModbus : PlcMachine
+    public abstract class PlcMachineModbus : PlcMachine
     {
         private const string HOLDING_REGISTER = "H";
         private const string COIL = "C";
@@ -19,17 +19,11 @@ namespace PlcUtil.PlcMachine
         private const ushort WORD_SCAN_SIZE = 125;
         private const ushort BIT_SCAN_SIZE = 2000;
 
-        private Modbus m_modbus;
+        protected Modbus m_modbus;
 
         private CancellationTokenSource m_cts = new CancellationTokenSource();
 
-        public PlcMachineModbus(string ipAddress, ModbusType type, int timeout = 5000) : this()
-        {
-            m_modbus = new Modbus(ipAddress, type);
-            m_modbus.WriteTimeout = m_modbus.ReadTimeout = timeout;
-        }
-
-        private PlcMachineModbus()
+        protected PlcMachineModbus()
         {
             _wordDataDict[HOLDING_REGISTER] = new WordData(MAX_HOLDING_REGISTER_ADDRESS);
             _bitDataDict[COIL] = new BitData(MAX_COIL_ADDRESS);
@@ -42,6 +36,17 @@ namespace PlcUtil.PlcMachine
             m_modbus.Start();
             m_cts = new CancellationTokenSource();
             Task.Run(() => ScanDevice(m_cts.Token));
+        }
+
+        public override void CloseDevice()
+        {
+            m_cts.Cancel();
+            m_modbus.Stop();
+
+            foreach (var wordData in _wordDataDict.Values)
+                wordData.ClearData();
+            foreach (var bitData in _bitDataDict.Values)
+                bitData.ClearData();
         }
 
         protected override bool ScanBitData()
@@ -76,17 +81,6 @@ namespace PlcUtil.PlcMachine
                 }
             }
             return result;
-        }
-
-        public override void CloseDevice()
-        {
-            m_cts.Cancel();
-            m_modbus.Stop();
-
-            foreach (var wordData in _wordDataDict.Values)
-                wordData.ClearData();
-            foreach (var bitData in _bitDataDict.Values)
-                bitData.ClearData();
         }
 
         public override void GetBitData(string address, out bool value)

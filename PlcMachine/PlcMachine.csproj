@@ -49,11 +49,15 @@
     <Compile Include="Comm\CommTcpClient.cs" />
     <Compile Include="Comm\CommTcpListenerSingle.cs" />
     <Compile Include="Comm\CommUdp.cs" />
+    <Compile Include="PlcMachineModbusUdp.cs" />
+    <Compile Include="PlcMachine\PlcMachineModbusTcp.cs" />
     <Compile Include="PlcMachine\MewtocolInterface\Mewtocol.cs" />
     <Compile Include="PlcMachine\MewtocolInterface\MewtocolLogWriter.cs" />
     <Compile Include="PlcMachine\ModbusInterface\Modbus.cs" />
     <Compile Include="PlcMachine\ModbusInterface\ModbusLogWriter.cs" />
-    <Compile Include="PlcMachine\ModbusInterface\ModbusType.cs" />
+    <Compile Include="PlcMachine\ConnectionType.cs" />
+    <Compile Include="PlcMachine\ModbusInterface\ModbusTcp.cs" />
+    <Compile Include="PlcMachine\ModbusInterface\ModbusUdp.cs" />
     <Compile Include="PlcMachine\PlcMachine.cs" />
     <Compile Include="PlcMachine\PlcMachineModbus.cs" />
     <Compile Include="PlcMachine\PlcMachineNone.cs" />
