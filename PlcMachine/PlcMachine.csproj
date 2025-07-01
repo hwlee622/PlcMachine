@@ -49,7 +49,7 @@
     <Compile Include="Comm\CommTcpClient.cs" />
     <Compile Include="Comm\CommTcpListenerSingle.cs" />
     <Compile Include="Comm\CommUdp.cs" />
-    <Compile Include="PlcMachineModbusUdp.cs" />
+    <Compile Include="PlcMachine\PlcMachineModbusUdp.cs" />
     <Compile Include="PlcMachine\PlcMachineModbusTcp.cs" />
     <Compile Include="PlcMachine\MewtocolInterface\Mewtocol.cs" />
     <Compile Include="PlcMachine\MewtocolInterface\MewtocolLogWriter.cs" />
