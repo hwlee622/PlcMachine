@@ -20,7 +20,6 @@ namespace PlcUtil.PlcMachine
             /// <summary>
             /// 1bit 데이터를 관리하는 클래스
             /// </summary>
-            /// <param name="length"></param>
             internal BitData(int length)
             {
                 _data = new bool[length];
