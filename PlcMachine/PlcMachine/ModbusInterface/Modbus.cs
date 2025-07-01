@@ -1,59 +1,22 @@
 ﻿using NModbus;
 using System;
-using System.Net.Sockets;
 using System.Threading;
 
 namespace ModbusInterface
 {
-    public class Modbus
+    public abstract class Modbus
     {
-        private ModbusLogWriter m_logWriter;
+        protected ModbusLogWriter m_logWriter;
 
-        private string m_ipAddress;
-        private const int PORT = 502;
-        private ModbusType m_type;
-
-        private TcpClient m_tcpClient;
-        private UdpClient m_udpClient;
-        private ModbusFactory m_factory;
-        private IModbusMaster m_master;
+        protected ModbusFactory m_factory;
+        protected IModbusMaster m_master;
 
         public int WriteTimeout = Timeout.Infinite;
         public int ReadTimeout = Timeout.Infinite;
 
-        public Modbus(string ip, ModbusType type)
-        {
-            m_logWriter = new ModbusLogWriter(ip, PORT);
+        public abstract void Start();
 
-            m_ipAddress = ip;
-            m_type = type;
-        }
-
-        public void Start()
-        {
-            switch (m_type)
-            {
-                default:
-                case ModbusType.Tcp:
-                    m_tcpClient = new TcpClient(m_ipAddress, PORT);
-                    m_tcpClient.ReceiveTimeout = ReadTimeout;
-                    m_factory = new ModbusFactory();
-                    m_master = m_factory.CreateMaster(m_tcpClient);
-                    break;
-                case ModbusType.Udp:
-                    m_udpClient = new UdpClient(m_ipAddress, PORT);
-                    m_factory = new ModbusFactory();
-                    m_master = m_factory.CreateMaster(m_udpClient);
-                    break;
-
-            }
-        }
-
-        public void Stop()
-        {
-            m_tcpClient?.Close();
-            m_udpClient?.Close();
-        }
+        public abstract void Stop();
 
         public bool ReadCoil(ushort address, out bool data)
         {
