@@ -25,7 +25,7 @@ namespace PlcUtil.PlcMachine
 
         public PlcMachineModbus(string ipAddress, ModbusType type, int timeout = 5000) : this()
         {
-            m_modbus = new Modbus(ipAddress);
+            m_modbus = new Modbus(ipAddress, type);
             m_modbus.WriteTimeout = m_modbus.ReadTimeout = timeout;
         }
 
