@@ -11,6 +11,7 @@ namespace ModbusInterface
 
         private string m_ipAddress;
         private const int PORT = 502;
+        private ModbusType m_type;
 
         private TcpClient m_tcpClient;
         private UdpClient m_udpClient;
@@ -20,19 +21,32 @@ namespace ModbusInterface
         public int WriteTimeout = Timeout.Infinite;
         public int ReadTimeout = Timeout.Infinite;
 
-        public Modbus(string ip)
+        public Modbus(string ip, ModbusType type)
         {
             m_logWriter = new ModbusLogWriter(ip, PORT);
 
             m_ipAddress = ip;
+            m_type = type;
         }
 
         public void Start()
         {
-            m_tcpClient = new TcpClient(m_ipAddress, PORT);
-            m_tcpClient.ReceiveTimeout = ReadTimeout;
-            m_factory = new ModbusFactory();
-            m_master = m_factory.CreateMaster(m_tcpClient);
+            switch (m_type)
+            {
+                default:
+                case ModbusType.Tcp:
+                    m_tcpClient = new TcpClient(m_ipAddress, PORT);
+                    m_tcpClient.ReceiveTimeout = ReadTimeout;
+                    m_factory = new ModbusFactory();
+                    m_master = m_factory.CreateMaster(m_tcpClient);
+                    break;
+                case ModbusType.Udp:
+                    m_udpClient = new UdpClient(m_ipAddress, PORT);
+                    m_factory = new ModbusFactory();
+                    m_master = m_factory.CreateMaster(m_udpClient);
+                    break;
+
+            }
         }
 
         public void Stop()

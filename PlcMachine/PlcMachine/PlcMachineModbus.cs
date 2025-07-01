@@ -23,7 +23,7 @@ namespace PlcUtil.PlcMachine
 
         private CancellationTokenSource m_cts = new CancellationTokenSource();
 
-        public PlcMachineModbus(string ipAddress, int timeout = 5000) : this()
+        public PlcMachineModbus(string ipAddress, ModbusType type, int timeout = 5000) : this()
         {
             m_modbus = new Modbus(ipAddress);
             m_modbus.WriteTimeout = m_modbus.ReadTimeout = timeout;
