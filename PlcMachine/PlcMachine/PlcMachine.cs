@@ -368,5 +368,31 @@ namespace PlcUtil.PlcMachine
         /// <param name="address">영역 주소</param>
         /// <param name="value">int 영역 값</param>
         public abstract void SetWordData(int address, int value);
+
+        /// <summary>
+        /// 스캔이 완료될 때 까지 대기하는 함수
+        /// </summary>
+        /// <returns></returns>
+        public void WaitScanComplete()
+        {
+            int count = 2;
+            var tcs = new TaskCompletionSource<bool>();
+            void Handler()
+            {
+                count--;
+                if (count <= 0)
+                    tcs.TrySetResult(true);
+            }
+
+            try
+            {
+                OnDataUpdated += Handler;
+                tcs.Task.GetAwaiter().GetResult();
+            }
+            finally
+            {
+                OnDataUpdated -= Handler;
+            }
+        }
     }
 }
