@@ -91,7 +91,8 @@ namespace PlcUtil.PlcMachine
 
             if (!_bitDataDict.TryGetValue(COIL, out var bitData))
                 return;
-            m_scanAddressData.SetScanAddress(COIL, uAddress, 1, BIT_SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(COIL, uAddress, 1, BIT_SCAN_SIZE))
+                WaitScanComplete();
 
             value = bitData.GetData(uAddress, 1)[0];
         }
@@ -114,7 +115,8 @@ namespace PlcUtil.PlcMachine
             value = string.Empty;
             if (!_wordDataDict.TryGetValue(HOLDING_REGISTER, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, length, WORD_SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, length, WORD_SCAN_SIZE))
+                WaitScanComplete();
 
             ushort[] data = plcData.GetData(address, length);
             var sb = new StringBuilder();
@@ -135,7 +137,8 @@ namespace PlcUtil.PlcMachine
             value = 0;
             if (!_wordDataDict.TryGetValue(HOLDING_REGISTER, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, 1, WORD_SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, 1, WORD_SCAN_SIZE))
+                WaitScanComplete();
 
             ushort data = plcData.GetData(address, 1)[0];
             value = (short)data;
@@ -146,7 +149,8 @@ namespace PlcUtil.PlcMachine
             value = 0;
             if (!_wordDataDict.TryGetValue(HOLDING_REGISTER, out var plcData))
                 return;
-            m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, 2, WORD_SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, 2, WORD_SCAN_SIZE))
+                WaitScanComplete();
 
             ushort[] data = plcData.GetData(address, 2);
             value = (data[1] << 16) | data[0];

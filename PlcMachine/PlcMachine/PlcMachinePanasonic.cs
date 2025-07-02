@@ -116,7 +116,8 @@ namespace PlcUtil.PlcMachine
 
             if (!_bitDataDict.TryGetValue(contactCode, out var bitData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
                 return;
-            m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1, SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1, SCAN_SIZE))
+                WaitScanComplete();
 
             value = bitData.GetData(contactAddress * 16 + hex, 1)[0];
         }
@@ -143,7 +144,8 @@ namespace PlcUtil.PlcMachine
             value = string.Empty;
             if (!_wordDataDict.TryGetValue(DT, out var wordData))
                 return;
-            m_scanAddressData.SetScanAddress(DT, address, length, SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(DT, address, length, SCAN_SIZE))
+                WaitScanComplete();
 
             ushort[] data = wordData.GetData(address, length);
             StringBuilder sb = new StringBuilder();
@@ -164,7 +166,8 @@ namespace PlcUtil.PlcMachine
             value = 0;
             if (!_wordDataDict.TryGetValue(DT, out var wordData))
                 return;
-            m_scanAddressData.SetScanAddress(DT, address, 1, SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(DT, address, 1, SCAN_SIZE))
+                WaitScanComplete();
 
             ushort data = wordData.GetData(address, 1)[0];
             value = (short)data;
@@ -175,7 +178,8 @@ namespace PlcUtil.PlcMachine
             value = 0;
             if (!_wordDataDict.TryGetValue(DT, out var wordData))
                 return;
-            m_scanAddressData.SetScanAddress(DT, address, 2, SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(DT, address, 2, SCAN_SIZE))
+                WaitScanComplete();
 
             ushort[] data = wordData.GetData(address, 2);
             value = (data[1] << 16) | data[0];
