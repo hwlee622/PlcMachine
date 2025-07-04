@@ -3,7 +3,7 @@
 namespace PlcUtil.PlcMachine
 {
     /// <summary>
-    /// Modbus Ucp 통신 PlcMachine
+    /// Modbus Udp 통신 PlcMachine
     /// </summary>
     public class PlcMachineModbusUdp : PlcMachineModbus
     {
