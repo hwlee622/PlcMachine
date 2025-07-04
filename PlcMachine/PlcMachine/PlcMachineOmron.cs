@@ -73,20 +73,19 @@ namespace PlcUtil.PlcMachine
             return result;
         }
 
-        public override void GetBitData(string address, out bool value)
+        public override bool GetBitData(string address)
         {
-            value = false;
+            return false;
         }
 
         public override void SetBitData(string address, bool value)
         {
         }
 
-        public override void GetWordData(int address, int length, out string value)
+        public override string GetWordDataASCII(int address, int length)
         {
-            value = string.Empty;
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
-                return;
+                return string.Empty;
             if (m_scanAddressData.SetScanAddress(DM, address, length, SCAN_SIZE))
                 WaitScanComplete();
 
@@ -100,35 +99,32 @@ namespace PlcUtil.PlcMachine
 
                 sb.Append(Encoding.ASCII.GetString(bitData));
             }
-            value = sb.ToString();
-            value = value.Trim('\0');
+            return sb.ToString().Trim('\0');
         }
 
-        public override void GetWordData(int address, out short value)
+        public override short GetWordDataShort(int address)
         {
-            value = 0;
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
-                return;
+                return 0;
             if (m_scanAddressData.SetScanAddress(DM, address, 1, SCAN_SIZE))
                 WaitScanComplete();
 
             ushort data = wordData.GetData(address, 1)[0];
-            value = (short)data;
+            return (short)data;
         }
 
-        public override void GetWordData(int address, out int value)
+        public override int GetWordDataInt(int address)
         {
-            value = 0;
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
-                return;
+                return 0;
             if (m_scanAddressData.SetScanAddress(DM, address, 2, SCAN_SIZE))
                 WaitScanComplete();
 
             ushort[] data = wordData.GetData(address, 2);
-            value = (data[1] << 16) | data[0];
+            return (data[1] << 16) | data[0];
         }
 
-        public override void SetWordData(int address, int length, string value)
+        public override void SetWordDataASCII(int address, int length, string value)
         {
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
@@ -148,7 +144,7 @@ namespace PlcUtil.PlcMachine
                 wordData.SetData(address, data);
         }
 
-        public override void SetWordData(int address, short value)
+        public override void SetWordDataShort(int address, short value)
         {
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;
@@ -159,7 +155,7 @@ namespace PlcUtil.PlcMachine
                 wordData.SetData(address, data);
         }
 
-        public override void SetWordData(int address, int value)
+        public override void SetWordDataInt(int address, int value)
         {
             if (!_wordDataDict.TryGetValue(DM, out var wordData))
                 return;

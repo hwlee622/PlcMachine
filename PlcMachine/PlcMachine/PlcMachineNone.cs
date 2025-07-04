@@ -25,39 +25,39 @@
             return true;
         }
 
-        public override void GetBitData(string address, out bool value)
+        public override bool GetBitData(string address)
         {
-            value = false;
+            return false;
         }
 
         public override void SetBitData(string address, bool value)
         {
         }
 
-        public override void GetWordData(int address, int length, out string value)
+        public override string GetWordDataASCII(int address, int length)
         {
-            value = string.Empty;
+            return string.Empty;
         }
 
-        public override void GetWordData(int address, out short value)
+        public override short GetWordDataShort(int address)
         {
-            value = 0;
+            return 0;
         }
 
-        public override void GetWordData(int address, out int value)
+        public override int GetWordDataInt(int address)
         {
-            value = 0;
+            return 0;
         }
 
-        public override void SetWordData(int address, int length, string value)
-        {
-        }
-
-        public override void SetWordData(int address, short value)
+        public override void SetWordDataASCII(int address, int length, string value)
         {
         }
 
-        public override void SetWordData(int address, int value)
+        public override void SetWordDataShort(int address, short value)
+        {
+        }
+
+        public override void SetWordDataInt(int address, int value)
         {
         }
     }

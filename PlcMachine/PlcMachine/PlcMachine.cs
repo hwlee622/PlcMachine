@@ -335,39 +335,87 @@ namespace PlcUtil.PlcMachine
 
         protected abstract bool ScanWordData();
 
-        /// <param name="address">접점 주소</param>
-        /// <param name="value">접점 정보</param>
-        public abstract void GetBitData(string address, out bool value);
+        /// <param name="address">영역 주소</param>
+        public abstract bool GetBitData(string address);
 
-        /// <param name="address">접점 주소</param>
-        /// <param name="value">접점 값</param>
+        /// <param name="address">영역 주소</param>
+        public async Task<bool> GetBitDataAsync(string address)
+        {
+            return await Task.Run(() => GetBitData(address));
+        }
+
+        /// <param name="address">영역 주소</param>
+        /// <param name="value">영역 값</param>
         public abstract void SetBitData(string address, bool value);
 
         /// <param name="address">영역 주소</param>
-        /// <param name="length">영역 길이</param>
-        /// <param name="value">ASCII 영역 정보</param>
-        public abstract void GetWordData(int address, int length, out string value);
-
-        /// <param name="address">영역 주소</param>
-        /// <param name="value">short 영역 정보</param>
-        public abstract void GetWordData(int address, out short value);
-
-        /// <param name="address">영역 주소</param>
-        /// <param name="value">int 영역 정보</param>
-        public abstract void GetWordData(int address, out int value);
+        /// <param name="value">영역 값</param>
+        public async Task SetBitDataAsync(string address, bool value)
+        {
+            await Task.Run(() => SetBitData(address, value));
+        }
 
         /// <param name="address">영역 주소</param>
         /// <param name="length">영역 길이</param>
-        /// <param name="value">ASCII 영역 값</param>
-        public abstract void SetWordData(int address, int length, string value);
+        public abstract string GetWordDataASCII(int address, int length);
 
         /// <param name="address">영역 주소</param>
-        /// <param name="value">short 영역 값</param>
-        public abstract void SetWordData(int address, short value);
+        /// <param name="length">영역 길이</param>
+        public async Task<string> GetWordDataASCIIAsync(int address, int length)
+        {
+            return await Task.Run(() => GetWordDataASCII(address, length));
+        }
 
         /// <param name="address">영역 주소</param>
-        /// <param name="value">int 영역 값</param>
-        public abstract void SetWordData(int address, int value);
+        public abstract short GetWordDataShort(int address);
+
+        /// <param name="address">영역 주소</param>
+        public async Task<short> GetWordDataShortAsync(int address)
+        {
+            return await Task.Run(() => GetWordDataShort(address));
+        }
+
+        /// <param name="address">영역 주소</param>
+        public abstract int GetWordDataInt(int address);
+
+        /// <param name="address">영역 주소</param>
+        public async Task<int> GetWordDataIntAsync(int address)
+        {
+            return await Task.Run(() => GetWordDataInt(address));
+        }
+
+        /// <param name="address">영역 주소</param>
+        /// <param name="length">영역 길이</param>
+        public abstract void SetWordDataASCII(int address, int length, string value);
+
+        /// <param name="address">영역 주소</param>
+        /// <param name="length">영역 길이</param>
+        public async Task SetWordDataASCIIAsync(int address, int length, string value)
+        {
+            await Task.Run(() => SetWordDataASCII(address, length, value));
+        }
+
+        /// <param name="address">영역 주소</param>
+        /// <param name="value">영역 값</param>
+        public abstract void SetWordDataShort(int address, short value);
+
+        /// <param name="address">영역 주소</param>
+        /// <param name="value">영역 값</param>
+        public async Task SetWordDataShortAsync(int address, short value)
+        {
+            await Task.Run(() => SetWordDataShort(address, value));
+        }
+
+        /// <param name="address">영역 주소</param>
+        /// <param name="value">영역 값</param>
+        public abstract void SetWordDataInt(int address, int value);
+
+        /// <param name="address">영역 주소</param>
+        /// <param name="value">영역 값</param>
+        public async Task SetWordDataIntAsync(int address, int value)
+        {
+            await Task.Run(() => SetWordDataInt(address, value));
+        }
 
         /// <summary>
         /// 스캔이 완료될 때 까지 대기하는 함수
