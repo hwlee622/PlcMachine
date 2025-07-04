@@ -357,62 +357,62 @@ namespace PlcUtil.PlcMachine
 
         /// <param name="address">영역 주소</param>
         /// <param name="length">영역 길이</param>
-        public abstract string GetWordDataASCII(int address, int length);
+        public abstract string GetWordDataASCII(string address, int length);
 
         /// <param name="address">영역 주소</param>
         /// <param name="length">영역 길이</param>
-        public async Task<string> GetWordDataASCIIAsync(int address, int length)
+        public async Task<string> GetWordDataASCIIAsync(string address, int length)
         {
             return await Task.Run(() => GetWordDataASCII(address, length));
         }
 
         /// <param name="address">영역 주소</param>
-        public abstract short GetWordDataShort(int address);
+        public abstract short GetWordDataShort(string address);
 
         /// <param name="address">영역 주소</param>
-        public async Task<short> GetWordDataShortAsync(int address)
+        public async Task<short> GetWordDataShortAsync(string address)
         {
             return await Task.Run(() => GetWordDataShort(address));
         }
 
         /// <param name="address">영역 주소</param>
-        public abstract int GetWordDataInt(int address);
+        public abstract int GetWordDataInt(string address);
 
         /// <param name="address">영역 주소</param>
-        public async Task<int> GetWordDataIntAsync(int address)
+        public async Task<int> GetWordDataIntAsync(string address)
         {
             return await Task.Run(() => GetWordDataInt(address));
         }
 
         /// <param name="address">영역 주소</param>
         /// <param name="length">영역 길이</param>
-        public abstract void SetWordDataASCII(int address, int length, string value);
+        public abstract void SetWordDataASCII(string address, int length, string value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="length">영역 길이</param>
-        public async Task SetWordDataASCIIAsync(int address, int length, string value)
+        public async Task SetWordDataASCIIAsync(string address, int length, string value)
         {
             await Task.Run(() => SetWordDataASCII(address, length, value));
         }
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">영역 값</param>
-        public abstract void SetWordDataShort(int address, short value);
+        public abstract void SetWordDataShort(string address, short value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">영역 값</param>
-        public async Task SetWordDataShortAsync(int address, short value)
+        public async Task SetWordDataShortAsync(string address, short value)
         {
             await Task.Run(() => SetWordDataShort(address, value));
         }
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">영역 값</param>
-        public abstract void SetWordDataInt(int address, int value);
+        public abstract void SetWordDataInt(string address, int value);
 
         /// <param name="address">영역 주소</param>
         /// <param name="value">영역 값</param>
-        public async Task SetWordDataIntAsync(int address, int value)
+        public async Task SetWordDataIntAsync(string address, int value)
         {
             await Task.Run(() => SetWordDataInt(address, value));
         }
