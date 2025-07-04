@@ -55,7 +55,6 @@
     <Compile Include="PlcMachine\MewtocolInterface\MewtocolLogWriter.cs" />
     <Compile Include="PlcMachine\ModbusInterface\Modbus.cs" />
     <Compile Include="PlcMachine\ModbusInterface\ModbusLogWriter.cs" />
-    <Compile Include="PlcMachine\ConnectionType.cs" />
     <Compile Include="PlcMachine\ModbusInterface\ModbusTcp.cs" />
     <Compile Include="PlcMachine\ModbusInterface\ModbusUdp.cs" />
     <Compile Include="PlcMachine\PlcMachine.cs" />
