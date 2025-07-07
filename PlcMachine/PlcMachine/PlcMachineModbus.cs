@@ -1,5 +1,7 @@
 ﻿using ModbusInterface;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,28 +87,22 @@ namespace PlcUtil.PlcMachine
 
         public override bool GetBitData(string address)
         {
-            if (!ushort.TryParse(address, out var uAddress))
+            if (!GetBitAddress(address, out var key, out var index))
                 return false;
-
-            if (!_bitDataDict.TryGetValue(COIL, out var bitData))
-                return false;
-            if (m_scanAddressData.SetScanAddress(COIL, uAddress, 1, BIT_SCAN_SIZE))
+            if (m_scanAddressData.SetScanAddress(key, index, 1, BIT_SCAN_SIZE))
                 WaitScanComplete();
 
-            return bitData.GetData(uAddress, 1)[0];
+            return _bitDataDict[key].GetData(index, 1)[0];
         }
 
         public override void SetBitData(string address, bool value)
         {
-            if (!ushort.TryParse(address, out var uAddress))
+            if (!GetBitAddress(address, out var key, out var index))
                 return;
+            m_scanAddressData.SetScanAddress(key, index, 1, BIT_SCAN_SIZE);
 
-            if (!_bitDataDict.TryGetValue(COIL, out var bitData))
-                return;
-            m_scanAddressData.SetScanAddress(COIL, uAddress, 1, BIT_SCAN_SIZE);
-
-            if (m_modbus.WriteCoil(uAddress, value))
-                bitData.SetData(uAddress, new bool[] { value });
+            if (m_modbus.WriteCoil(index, value))
+                _bitDataDict[key].SetData(index, new bool[] { value });
         }
 
         public override string GetWordDataASCII(string address, int length)
@@ -198,14 +194,48 @@ namespace PlcUtil.PlcMachine
                 _wordDataDict[key].SetData(index, data);
         }
 
+        protected bool GetBitAddress(string address, out string key, out ushort index)
+        {
+            key = string.Empty;
+            index = 0;
+            address = address.ToUpper();
+            var bitKeys = new HashSet<string> { COIL };
+
+            foreach (var bitKey in bitKeys)
+            {
+                if (!address.StartsWith(bitKey) || address.Length < bitKey.Length + 1)
+                    continue;
+
+                var sAddress = address.Substring(bitKey.Length);
+                if (ushort.TryParse(sAddress, out var bitAddress))
+                {
+                    key = bitKey;
+                    index = bitAddress;
+                    return true;
+                }
+            }
+            return false;
+        }
+
         protected bool GetWordAddress(string address, out string key, out int index)
         {
             key = string.Empty;
             index = 0;
-            if (address.StartsWith(HOLDING_REGISTER) && int.TryParse(address.Substring(HOLDING_REGISTER.Length), out index))
+            address = address.ToUpper();
+            var bitKeys = new HashSet<string> { HOLDING_REGISTER };
+
+            foreach (var bitKey in bitKeys)
             {
-                key = HOLDING_REGISTER;
-                return true;
+                if (!address.StartsWith(bitKey) || address.Length < bitKey.Length + 1)
+                    continue;
+
+                var sAddress = address.Substring(bitKey.Length);
+                if (int.TryParse(sAddress, out var wordAddress))
+                {
+                    key = bitKey;
+                    index = wordAddress;
+                    return true;
+                }
             }
             return false;
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO.Ports;
 using System.Text;
 using System.Threading;
@@ -175,10 +176,21 @@ namespace PlcUtil.PlcMachine
         {
             key = string.Empty;
             index = 0;
-            if (address.StartsWith(DM) && int.TryParse(address.Substring(DM.Length), out index))
+            address = address.ToUpper();
+            var bitKeys = new HashSet<string> { DM };
+
+            foreach (var bitKey in bitKeys)
             {
-                key = DM;
-                return true;
+                if (!address.StartsWith(bitKey) || address.Length < bitKey.Length + 1)
+                    continue;
+
+                var sAddress = address.Substring(bitKey.Length);
+                if (int.TryParse(sAddress, out var wordAddress))
+                {
+                    key = bitKey;
+                    index = wordAddress;
+                    return true;
+                }
             }
             return false;
         }

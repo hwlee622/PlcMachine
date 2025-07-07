@@ -1,7 +1,9 @@
 ﻿using MewtocolInterface;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.IO.Ports;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -107,36 +109,22 @@ namespace PlcUtil.PlcMachine
 
         public override bool GetBitData(string address)
         {
-            if (string.IsNullOrEmpty(address) || address.Length < 3)
+            if (!GetBitAddress(address, out var key, out var index))
                 return false;
-
-            string contactCode = address.Substring(0, 1).ToUpper();
-            string sContactAddress = address.Substring(1, address.Length - 2);
-            string sHex = address.Substring(address.Length - 1, 1).ToUpper();
-
-            if (!_bitDataDict.TryGetValue(contactCode, out var bitData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
-                return false;
-            if (m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1, SCAN_SIZE))
+            if (m_scanAddressData.SetScanAddress(key, index / 16, 1, SCAN_SIZE))
                 WaitScanComplete();
 
-            return bitData.GetData(contactAddress * 16 + hex, 1)[0];
+            return _bitDataDict[key].GetData(index, 1)[0];
         }
 
         public override void SetBitData(string address, bool value)
         {
-            if (string.IsNullOrEmpty(address) || address.Length < 3)
+            if (!GetBitAddress(address, out var key, out var index))
                 return;
+            m_scanAddressData.SetScanAddress(key, index / 16, 1, SCAN_SIZE);
 
-            string contactCode = address.Substring(0, 1).ToUpper();
-            string sContactAddress = address.Substring(1, address.Length - 2);
-            string sHex = address.Substring(address.Length - 1, 1).ToUpper();
-
-            if (!_bitDataDict.TryGetValue(contactCode, out var bitData) || !int.TryParse(sContactAddress, out int contactAddress) || !TryParseHexToInt(sHex, out int hex))
-                return;
-            m_scanAddressData.SetScanAddress(contactCode, contactAddress, 1, SCAN_SIZE);
-
-            if (m_mewtocol.SetDIOData(contactCode, contactAddress, hex, value))
-                bitData.SetData(contactAddress * 16 + hex, new bool[] { value });
+            if (m_mewtocol.SetDIOData(key, index / 16, index % 16, value))
+                _bitDataDict[key].SetData(index, new bool[] { value });
         }
 
         public override string GetWordDataASCII(string address, int length)
@@ -242,14 +230,49 @@ namespace PlcUtil.PlcMachine
             }
         }
 
+        protected bool GetBitAddress(string address, out string key, out int index)
+        {
+            key = string.Empty;
+            index = 0;
+            address = address.ToUpper();
+            var bitKeys = new HashSet<string>() { R, X, Y };
+
+            foreach (var bitKey in bitKeys)
+            {
+                if (!address.StartsWith(bitKey) || address.Length < bitKey.Length + 2)
+                    continue;
+
+                var sBitAddress = address.Substring(bitKey.Length, address.Length - bitKey.Length - 1);
+                var sHex = address.Substring(address.Length - 1, 1);
+                if (int.TryParse(sBitAddress, out var bitAddress) && TryParseHexToInt(sHex, out var hex))
+                {
+                    key = bitKey;
+                    index = bitAddress * 16 + hex;
+                    return true;
+                }
+            }
+            return false;
+        }
+
         protected bool GetWordAddress(string address, out string key, out int index)
         {
             key = string.Empty;
             index = 0;
-            if (address.StartsWith(DT) && int.TryParse(address.Substring(DT.Length), out index))
+            address = address.ToUpper();
+            var bitKeys = new HashSet<string> { DT };
+
+            foreach(var bitKey in bitKeys)
             {
-                key = DT;
-                return true;
+                if (!address.StartsWith(bitKey) || address.Length < bitKey.Length + 1)
+                    continue;
+
+                var sAddress = address.Substring(bitKey.Length);
+                if (int.TryParse(sAddress, out var wordAddress))
+                {
+                    key = bitKey;
+                    index = wordAddress;
+                    return false;
+                }
             }
             return false;
         }
