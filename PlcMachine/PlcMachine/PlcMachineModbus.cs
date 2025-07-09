@@ -1,7 +1,6 @@
 ﻿using ModbusInterface;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,11 +12,10 @@ namespace PlcUtil.PlcMachine
     /// </summary>
     public abstract class PlcMachineModbus : PlcMachine
     {
-        private const string HOLDING_REGISTER = "H";
-        private const string COIL = "C";
+        private const string COIL = "1";
+        private const string HOLDING_REGISTER = "4";
 
-        private const int MAX_HOLDING_REGISTER_ADDRESS = 10000;
-        private const int MAX_COIL_ADDRESS = 10000;
+        private const int MAX_MODBUS_ADDRESS = 10000;
         private const ushort WORD_SCAN_SIZE = 125;
         private const ushort BIT_SCAN_SIZE = 2000;
 
@@ -27,8 +25,8 @@ namespace PlcUtil.PlcMachine
 
         protected PlcMachineModbus()
         {
-            _wordDataDict[HOLDING_REGISTER] = new WordData(MAX_HOLDING_REGISTER_ADDRESS);
-            _bitDataDict[COIL] = new BitData(MAX_COIL_ADDRESS);
+            _wordDataDict[HOLDING_REGISTER] = new WordData(MAX_MODBUS_ADDRESS);
+            _bitDataDict[COIL] = new BitData(MAX_MODBUS_ADDRESS);
         }
 
         public override void CreateDevice()
@@ -210,7 +208,7 @@ namespace PlcUtil.PlcMachine
                 if (ushort.TryParse(sAddress, out var bitAddress))
                 {
                     key = bitKey;
-                    index = bitAddress;
+                    index = (ushort)(bitAddress - 1);
                     return true;
                 }
             }
@@ -233,7 +231,7 @@ namespace PlcUtil.PlcMachine
                 if (int.TryParse(sAddress, out var wordAddress))
                 {
                     key = bitKey;
-                    index = wordAddress;
+                    index = (ushort)(wordAddress - 1);
                     return true;
                 }
             }
