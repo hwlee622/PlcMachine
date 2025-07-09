@@ -121,7 +121,7 @@ namespace PlcUtil.PlcMachine
                 return;
             m_scanAddressData.SetScanAddress(key, index / 16, 1, SCAN_SIZE);
 
-            if (m_mewtocol.SetDIOData(key, index / 16, index % 16, value))
+            if (key != X && m_mewtocol.SetDIOData(key, index / 16, index % 16, value))
                 _bitDataDict[key].SetData(index, new bool[] { value });
         }
 
