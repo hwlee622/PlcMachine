@@ -13,6 +13,8 @@ namespace PlcUtil.PlcMachine
     public abstract class PlcMachineModbus : PlcMachine
     {
         private const string COIL = "1";
+        private const string DISCRETE_INPUT = "2";
+        private const string INPUT_REGISTER = "3";
         private const string HOLDING_REGISTER = "4";
 
         private const int MAX_MODBUS_ADDRESS = 10000;
@@ -57,7 +59,10 @@ namespace PlcUtil.PlcMachine
                 var addressList = m_scanAddressData.GetScanAddress(key);
                 foreach (var address in addressList)
                 {
-                    if (!m_modbus.ReadCoil((ushort)address, BIT_SCAN_SIZE, out var data))
+                    var data = new bool[BIT_SCAN_SIZE];
+                    if (key == COIL && !m_modbus.ReadCoil((ushort)address, BIT_SCAN_SIZE, out data))
+                        result = false;
+                    else if (key == DISCRETE_INPUT && !m_modbus.ReadInput((ushort)address, BIT_SCAN_SIZE, out data))
                         result = false;
 
                     _bitDataDict[key].SetData(address, data);
@@ -72,12 +77,15 @@ namespace PlcUtil.PlcMachine
             foreach (var key in _wordDataDict.Keys)
             {
                 var addressList = m_scanAddressData.GetScanAddress(key);
-                for (int i = 0; i < addressList.Count; i++)
+                foreach (var address in addressList)
                 {
-                    if (!m_modbus.ReadHoldingRegister((ushort)addressList[i], WORD_SCAN_SIZE, out var data))
+                    var data = new ushort[WORD_SCAN_SIZE];
+                    if (key == INPUT_REGISTER && !m_modbus.ReadInputRegister((ushort)address, WORD_SCAN_SIZE, out data))
+                        result = false;
+                    if (key == HOLDING_REGISTER && !m_modbus.ReadHoldingRegister((ushort)address, WORD_SCAN_SIZE, out data))
                         result = false;
 
-                    _wordDataDict[key].SetData(addressList[i], data);
+                    _wordDataDict[key].SetData(address, data);
                 }
             }
             return result;
@@ -99,7 +107,7 @@ namespace PlcUtil.PlcMachine
                 return;
             m_scanAddressData.SetScanAddress(key, index, 1, BIT_SCAN_SIZE);
 
-            if (m_modbus.WriteCoil(index, value))
+            if (key == COIL && m_modbus.WriteCoil(index, value))
                 _bitDataDict[key].SetData(index, new bool[] { value });
         }
 
@@ -162,7 +170,7 @@ namespace PlcUtil.PlcMachine
             for (int i = 0; i < length; i++)
                 data[i] = (ushort)(value[1 + i * 2] << 8 | value[i * 2]);
 
-            if (m_modbus.WriteHoldingRegister((ushort)index, data))
+            if (key == HOLDING_REGISTER && m_modbus.WriteHoldingRegister((ushort)index, data))
                 _wordDataDict[key].SetData(index, data);
         }
 
@@ -174,7 +182,7 @@ namespace PlcUtil.PlcMachine
                 WaitScanComplete();
 
             ushort[] data = new ushort[] { (ushort)value };
-            if (m_modbus.WriteHoldingRegister((ushort)index, data[0]))
+            if (key == HOLDING_REGISTER && m_modbus.WriteHoldingRegister((ushort)index, data[0]))
                 _wordDataDict[key].SetData(index, data);
         }
 
@@ -188,7 +196,7 @@ namespace PlcUtil.PlcMachine
             ushort[] data = new ushort[2];
             data[0] = (ushort)(value & 0xFFFF);
             data[1] = (ushort)((value >> 16) & 0xFFFF);
-            if (m_modbus.WriteHoldingRegister((ushort)index, data))
+            if (key == HOLDING_REGISTER && m_modbus.WriteHoldingRegister((ushort)index, data))
                 _wordDataDict[key].SetData(index, data);
         }
 
@@ -197,7 +205,7 @@ namespace PlcUtil.PlcMachine
             key = string.Empty;
             index = 0;
             address = address.ToUpper();
-            var bitKeys = new HashSet<string> { COIL };
+            var bitKeys = new HashSet<string> { COIL, DISCRETE_INPUT };
 
             foreach (var bitKey in bitKeys)
             {
@@ -220,7 +228,7 @@ namespace PlcUtil.PlcMachine
             key = string.Empty;
             index = 0;
             address = address.ToUpper();
-            var bitKeys = new HashSet<string> { HOLDING_REGISTER };
+            var bitKeys = new HashSet<string> { INPUT_REGISTER, HOLDING_REGISTER };
 
             foreach (var bitKey in bitKeys)
             {
