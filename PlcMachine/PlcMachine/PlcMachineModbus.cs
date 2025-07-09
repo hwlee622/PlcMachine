@@ -1,5 +1,6 @@
 ﻿using ModbusInterface;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,11 +12,10 @@ namespace PlcUtil.PlcMachine
     /// </summary>
     public abstract class PlcMachineModbus : PlcMachine
     {
-        private const string HOLDING_REGISTER = "H";
-        private const string COIL = "C";
+        private const string COIL = "1";
+        private const string HOLDING_REGISTER = "4";
 
-        private const int MAX_HOLDING_REGISTER_ADDRESS = 10000;
-        private const int MAX_COIL_ADDRESS = 10000;
+        private const int MAX_MODBUS_ADDRESS = 10000;
         private const ushort WORD_SCAN_SIZE = 125;
         private const ushort BIT_SCAN_SIZE = 2000;
 
@@ -25,8 +25,8 @@ namespace PlcUtil.PlcMachine
 
         protected PlcMachineModbus()
         {
-            _wordDataDict[HOLDING_REGISTER] = new WordData(MAX_HOLDING_REGISTER_ADDRESS);
-            _bitDataDict[COIL] = new BitData(MAX_COIL_ADDRESS);
+            _wordDataDict[HOLDING_REGISTER] = new WordData(MAX_MODBUS_ADDRESS);
+            _bitDataDict[COIL] = new BitData(MAX_MODBUS_ADDRESS);
         }
 
         public override void CreateDevice()
@@ -85,42 +85,36 @@ namespace PlcUtil.PlcMachine
 
         public override bool GetBitData(string address)
         {
-            if (!ushort.TryParse(address, out var uAddress))
+            if (!GetBitAddress(address, out var key, out var index))
                 return false;
-
-            if (!_bitDataDict.TryGetValue(COIL, out var bitData))
-                return false;
-            if (m_scanAddressData.SetScanAddress(COIL, uAddress, 1, BIT_SCAN_SIZE))
+            if (m_scanAddressData.SetScanAddress(key, index, 1, BIT_SCAN_SIZE))
                 WaitScanComplete();
 
-            return bitData.GetData(uAddress, 1)[0];
+            return _bitDataDict[key].GetData(index, 1)[0];
         }
 
         public override void SetBitData(string address, bool value)
         {
-            if (!ushort.TryParse(address, out var uAddress))
+            if (!GetBitAddress(address, out var key, out var index))
                 return;
+            m_scanAddressData.SetScanAddress(key, index, 1, BIT_SCAN_SIZE);
 
-            if (!_bitDataDict.TryGetValue(COIL, out var bitData))
-                return;
-            m_scanAddressData.SetScanAddress(COIL, uAddress, 1, BIT_SCAN_SIZE);
-
-            if (m_modbus.WriteCoil(uAddress, value))
-                bitData.SetData(uAddress, new bool[] { value });
+            if (m_modbus.WriteCoil(index, value))
+                _bitDataDict[key].SetData(index, new bool[] { value });
         }
 
-        public override string GetWordDataASCII(int address, int length)
+        public override string GetWordDataASCII(string address, int length)
         {
-            if (!_wordDataDict.TryGetValue(HOLDING_REGISTER, out var plcData))
+            if (!GetWordAddress(address, out string key, out int index))
                 return string.Empty;
-            if (m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, length, WORD_SCAN_SIZE))
+            if (m_scanAddressData.SetScanAddress(key, index, length, WORD_SCAN_SIZE))
                 WaitScanComplete();
 
-            ushort[] data = plcData.GetData(address, length);
-            var sb = new StringBuilder();
+            ushort[] data = _wordDataDict[key].GetData(index, length);
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < data.Length; i++)
             {
-                var bitData = BitConverter.GetBytes(data[i]);
+                byte[] bitData = BitConverter.GetBytes(data[i]);
                 if (!BitConverter.IsLittleEndian)
                     Array.Reverse(bitData);
 
@@ -129,33 +123,34 @@ namespace PlcUtil.PlcMachine
             return sb.ToString().Trim('\0');
         }
 
-        public override short GetWordDataShort(int address)
+        public override short GetWordDataShort(string address)
         {
-            if (!_wordDataDict.TryGetValue(HOLDING_REGISTER, out var plcData))
+            if (!GetWordAddress(address, out string key, out int index))
                 return 0;
-            if (m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, 1, WORD_SCAN_SIZE))
+            if (m_scanAddressData.SetScanAddress(key, index, 1, WORD_SCAN_SIZE))
                 WaitScanComplete();
 
-            ushort data = plcData.GetData(address, 1)[0];
+            ushort data = _wordDataDict[key].GetData(index, 1)[0];
             return (short)data;
         }
 
-        public override int GetWordDataInt(int address)
+        public override int GetWordDataInt(string address)
         {
-            if (!_wordDataDict.TryGetValue(HOLDING_REGISTER, out var plcData))
+            if (!GetWordAddress(address, out string key, out int index))
                 return 0;
-            if (m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, 2, WORD_SCAN_SIZE))
+            if (m_scanAddressData.SetScanAddress(key, index, 2, WORD_SCAN_SIZE))
                 WaitScanComplete();
 
-            ushort[] data = plcData.GetData(address, 2);
+            ushort[] data = _wordDataDict[key].GetData(index, 2);
             return (data[1] << 16) | data[0];
         }
 
-        public override void SetWordDataASCII(int address, int length, string value)
+        public override void SetWordDataASCII(string address, int length, string value)
         {
-            if (!_wordDataDict.TryGetValue(HOLDING_REGISTER, out var plcData))
+            if (!GetWordAddress(address, out string key, out int index))
                 return;
-            m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, length, WORD_SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(key, index, 2, WORD_SCAN_SIZE))
+                WaitScanComplete();
 
             if (value.Length % 2 != 0)
                 value += '\0';
@@ -167,32 +162,80 @@ namespace PlcUtil.PlcMachine
             for (int i = 0; i < length; i++)
                 data[i] = (ushort)(value[1 + i * 2] << 8 | value[i * 2]);
 
-            if (m_modbus.WriteHoldingRegister((ushort)address, data))
-                plcData.SetData(address, data);
+            if (m_modbus.WriteHoldingRegister((ushort)index, data))
+                _wordDataDict[key].SetData(index, data);
         }
 
-        public override void SetWordDataShort(int address, short value)
+        public override void SetWordDataShort(string address, short value)
         {
-            if (!_wordDataDict.TryGetValue(HOLDING_REGISTER, out var plcData))
+            if (!GetWordAddress(address, out string key, out int index))
                 return;
-            m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, 1, WORD_SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(key, index, 2, WORD_SCAN_SIZE))
+                WaitScanComplete();
 
             ushort[] data = new ushort[] { (ushort)value };
-            if (m_modbus.WriteHoldingRegister((ushort)address, data[0]))
-                plcData.SetData(address, data);
+            if (m_modbus.WriteHoldingRegister((ushort)index, data[0]))
+                _wordDataDict[key].SetData(index, data);
         }
 
-        public override void SetWordDataInt(int address, int value)
+        public override void SetWordDataInt(string address, int value)
         {
-            if (!_wordDataDict.TryGetValue(HOLDING_REGISTER, out var plcData))
+            if (!GetWordAddress(address, out string key, out int index))
                 return;
-            m_scanAddressData.SetScanAddress(HOLDING_REGISTER, address, 2, WORD_SCAN_SIZE);
+            if (m_scanAddressData.SetScanAddress(key, index, 2, WORD_SCAN_SIZE))
+                WaitScanComplete();
 
             ushort[] data = new ushort[2];
             data[0] = (ushort)(value & 0xFFFF);
             data[1] = (ushort)((value >> 16) & 0xFFFF);
-            if (m_modbus.WriteHoldingRegister((ushort)address, data))
-                plcData.SetData(address, data);
+            if (m_modbus.WriteHoldingRegister((ushort)index, data))
+                _wordDataDict[key].SetData(index, data);
+        }
+
+        protected bool GetBitAddress(string address, out string key, out ushort index)
+        {
+            key = string.Empty;
+            index = 0;
+            address = address.ToUpper();
+            var bitKeys = new HashSet<string> { COIL };
+
+            foreach (var bitKey in bitKeys)
+            {
+                if (!address.StartsWith(bitKey) || address.Length < bitKey.Length + 1)
+                    continue;
+
+                var sAddress = address.Substring(bitKey.Length);
+                if (ushort.TryParse(sAddress, out var bitAddress))
+                {
+                    key = bitKey;
+                    index = (ushort)(bitAddress - 1);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        protected bool GetWordAddress(string address, out string key, out int index)
+        {
+            key = string.Empty;
+            index = 0;
+            address = address.ToUpper();
+            var bitKeys = new HashSet<string> { HOLDING_REGISTER };
+
+            foreach (var bitKey in bitKeys)
+            {
+                if (!address.StartsWith(bitKey) || address.Length < bitKey.Length + 1)
+                    continue;
+
+                var sAddress = address.Substring(bitKey.Length);
+                if (int.TryParse(sAddress, out var wordAddress))
+                {
+                    key = bitKey;
+                    index = (ushort)(wordAddress - 1);
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

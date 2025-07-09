@@ -34,30 +34,30 @@
         {
         }
 
-        public override string GetWordDataASCII(int address, int length)
+        public override string GetWordDataASCII(string address, int length)
         {
             return string.Empty;
         }
 
-        public override short GetWordDataShort(int address)
+        public override short GetWordDataShort(string address)
         {
             return 0;
         }
 
-        public override int GetWordDataInt(int address)
+        public override int GetWordDataInt(string address)
         {
             return 0;
         }
 
-        public override void SetWordDataASCII(int address, int length, string value)
+        public override void SetWordDataASCII(string address, int length, string value)
         {
         }
 
-        public override void SetWordDataShort(int address, short value)
+        public override void SetWordDataShort(string address, short value)
         {
         }
 
-        public override void SetWordDataInt(int address, int value)
+        public override void SetWordDataInt(string address, int value)
         {
         }
     }
