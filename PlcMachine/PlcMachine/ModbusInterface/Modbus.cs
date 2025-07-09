@@ -76,6 +76,66 @@ namespace ModbusInterface
             }
         }
 
+        public bool ReadInput(ushort address, out bool data)
+        {
+            data = false;
+            try
+            {
+                data = m_master.ReadInputs(1, address, 1)[0];
+                return true;
+            }
+            catch (Exception ex)
+            {
+                m_logWriter.LogError(ex);
+                return false;
+            }
+        }
+
+        public bool ReadInput(ushort address, ushort len, out bool[] data)
+        {
+            data = new bool[len];
+            try
+            {
+                data = m_master.ReadInputs(1, address, len);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                m_logWriter.LogError(ex);
+                return false;
+            }
+        }
+
+        public bool ReadInputRegister(ushort address, out ushort data)
+        {
+            data = 0;
+            try
+            {
+                data = m_master.ReadInputRegisters(1, address, 1)[0];
+                return true;
+            }
+            catch (Exception ex)
+            {
+                m_logWriter.LogError(ex);
+                return false;
+            }
+        }
+
+        public bool ReadInputRegister(ushort address, ushort len, out ushort[] data)
+        {
+            data = new ushort[len];
+            try
+            {
+                data = m_master.ReadInputRegisters(1, address, len);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                m_logWriter.LogError(ex);
+                return false;
+            }
+        }
+
         public bool ReadHoldingRegister(ushort address, out ushort data)
         {
             data = 0;
