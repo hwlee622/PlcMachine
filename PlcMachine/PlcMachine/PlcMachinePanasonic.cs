@@ -269,7 +269,7 @@ namespace PlcUtil.PlcMachine
                 {
                     key = bitKey;
                     index = wordAddress;
-                    return false;
+                    return true;
                 }
             }
             return false;
