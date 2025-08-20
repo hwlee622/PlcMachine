@@ -21,13 +21,14 @@ namespace ModbusInterface
         public override void Start()
         {
             m_udpClient = new UdpClient(m_ipAddress, m_port);
-            m_factory = new ModbusFactory();
-            m_master = m_factory.CreateMaster(m_udpClient);
+            var factory = new ModbusFactory();
+            m_master = factory.CreateMaster(m_udpClient);
         }
 
         public override void Stop()
         {
-            m_udpClient?.Close();
+            m_master?.Dispose();
+            m_udpClient?.Dispose();
         }
     }
 }

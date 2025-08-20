@@ -18,7 +18,7 @@ namespace PlcUtil.PlcMachine
         private const string HOLDING_REGISTER = "4";
 
         private const int MAX_MODBUS_ADDRESS = 10000;
-        private const ushort WORD_SCAN_SIZE = 125;
+        private const ushort WORD_SCAN_SIZE = 100;
         private const ushort BIT_SCAN_SIZE = 2000;
 
         protected Modbus m_modbus;
@@ -239,7 +239,7 @@ namespace PlcUtil.PlcMachine
                 if (int.TryParse(sAddress, out var wordAddress))
                 {
                     key = bitKey;
-                    index = (ushort)(wordAddress - 1);
+                    index = (ushort)(wordAddress);
                     return true;
                 }
             }
