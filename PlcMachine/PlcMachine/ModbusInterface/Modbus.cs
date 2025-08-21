@@ -8,7 +8,6 @@ namespace ModbusInterface
     {
         protected ModbusLogWriter m_logWriter;
 
-        protected ModbusFactory m_factory;
         protected IModbusMaster m_master;
 
         public int WriteTimeout = Timeout.Infinite;
