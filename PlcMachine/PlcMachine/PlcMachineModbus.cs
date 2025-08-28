@@ -200,6 +200,17 @@ namespace PlcUtil.PlcMachine
                 _wordDataDict[key].SetData(index, data);
         }
 
+        public override void SetWordDataContinuous(string address, ushort[] value)
+        {
+            if (!GetWordAddress(address, out string key, out int index))
+                return;
+            if (m_scanAddressData.SetScanAddress(key, index, value.Length, WORD_SCAN_SIZE))
+                WaitScanComplete();
+
+            if (key == HOLDING_REGISTER && m_modbus.WriteHoldingRegister((ushort)index, value))
+                _wordDataDict[key].SetData(index, value);
+        }
+
         protected bool GetBitAddress(string address, out string key, out ushort index)
         {
             key = string.Empty;
