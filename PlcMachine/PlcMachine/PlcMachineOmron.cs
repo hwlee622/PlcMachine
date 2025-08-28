@@ -172,6 +172,17 @@ namespace PlcUtil.PlcMachine
                 _wordDataDict[key].SetData(index, data);
         }
 
+        public override void SetWordDataContinuous(string address, ushort[] value)
+        {
+            if (!GetWordAddress(address, out string key, out int index))
+                return;
+            if (m_scanAddressData.SetScanAddress(key, index, value.Length, SCAN_SIZE))
+                WaitScanComplete();
+
+            if (m_upperLink.SetDMData(index, value.Length, value))
+                _wordDataDict[key].SetData(index, value);
+        }
+
         protected bool GetWordAddress(string address, out string key, out int index)
         {
             key = string.Empty;

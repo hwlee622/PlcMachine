@@ -417,6 +417,54 @@ namespace PlcUtil.PlcMachine
             await Task.Run(() => SetWordDataInt(address, value));
         }
 
+        /// <param name="address">연속 영역 시작 주소</param>
+        /// <param name="value">연속 영역 값</param>
+        public abstract void SetWordDataContinuous(string address, ushort[] value);
+
+        public async Task SetWordDataContinuousAsync(string address, ushort[] value)
+        {
+            await Task.Run(() => SetWordDataContinuous(address, value));
+        }
+
+        public ushort[] GetContinuousWordData(string value, int length, ushort[] continuousValue)
+        {
+            var newValue = new ushort[continuousValue.Length + length];
+
+            if (value.Length % 2 != 0)
+                value += '\0';
+
+            while (value.Length < length * 2)
+                value += "\0\0";
+
+            ushort[] data = new ushort[length];
+            for (int i = 0; i < length; i++)
+                data[i] = (ushort)(value[1 + i * 2] << 8 | value[i * 2]);
+
+            Array.Copy(continuousValue, 0, newValue, 0, continuousValue.Length);
+            Array.Copy(data, 0, newValue, continuousValue.Length, data.Length);
+            return newValue;
+        }
+
+        public ushort[] GetContinuousWordData(short value, ushort[] continuousValue)
+        {
+            var newValue = new ushort[continuousValue.Length + 1];
+            Array.Copy(continuousValue, 0, newValue, 0, continuousValue.Length);
+            newValue[continuousValue.Length] = (ushort)value;
+            return newValue;
+        }
+
+        public ushort[] GetContinuousWordData(int value, ushort[] continuousValue)
+        {
+            var newValue = new ushort[continuousValue.Length + 2];
+            ushort[] data = new ushort[2];
+            data[0] = (ushort)(value & 0xFFFF);
+            data[1] = (ushort)((value >> 16) & 0xFFFF);
+
+            Array.Copy(continuousValue, 0, newValue, 0, continuousValue.Length);
+            Array.Copy(data, 0, newValue, continuousValue.Length, data.Length);
+            return newValue;
+        }
+
         /// <summary>
         /// 스캔이 완료될 때 까지 대기하는 함수
         /// </summary>

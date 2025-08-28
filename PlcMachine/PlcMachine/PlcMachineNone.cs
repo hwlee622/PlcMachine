@@ -60,5 +60,9 @@
         public override void SetWordDataInt(string address, int value)
         {
         }
+
+        public override void SetWordDataContinuous(string address, ushort[] value)
+        {
+        }
     }
 }
