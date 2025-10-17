@@ -9,7 +9,7 @@ namespace UpperLinkInterface
     {
         public UpperlinkLogWriter(string portNumber)
         {
-            m_plcName = portNumber;
+            m_plcName = $"SERIAL_{portNumber}";
             Task.Run(() => FileWrite());
         }
 

@@ -9,7 +9,7 @@ namespace ModbusInterface
     {
         public ModbusLogWriter(string ipAddress, int port)
         {
-            m_plcName = $"{ipAddress}_{port}";
+            m_plcName = $"LAN_{ipAddress}_{port}";
             Task.Run(() => FileWrite());
         }
 

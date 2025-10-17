@@ -9,13 +9,13 @@ namespace MewtocolInterface
     {
         public MewtocolLogWriter(string ipAddress, int port)
         {
-            m_plcName = $"{ipAddress}_{port}";
+            m_plcName = $"LAN_{ipAddress}_{port}";
             Task.Run(() => FileWrite());
         }
 
         public MewtocolLogWriter(string portNumber)
         {
-            m_plcName = portNumber;
+            m_plcName = $"SERIAL_{portNumber}";
             Task.Run(() => FileWrite());
         }
 
