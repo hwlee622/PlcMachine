@@ -6,7 +6,7 @@ namespace ModbusInterface
 {
     public abstract class Modbus
     {
-        protected ModbusLogWriter m_logWriter;
+        public Action<Exception> OnError;
 
         protected IModbusMaster m_master;
 
@@ -27,7 +27,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -42,7 +42,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -56,7 +56,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -70,7 +70,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -85,7 +85,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -100,7 +100,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -115,7 +115,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -130,7 +130,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -145,7 +145,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -160,7 +160,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -174,7 +174,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }
@@ -188,7 +188,7 @@ namespace ModbusInterface
             }
             catch (Exception ex)
             {
-                m_logWriter.LogError(ex);
+                OnError?.Invoke(ex);
                 return false;
             }
         }

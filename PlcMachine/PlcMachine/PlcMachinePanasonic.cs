@@ -30,12 +30,14 @@ namespace PlcUtil.PlcMachine
         {
             m_mewtocol = new Mewtocol(ipAddress, port);
             m_mewtocol.WriteTimeout = m_mewtocol.ReadTimeout = timeout;
+            m_mewtocol.OnError += ex => OnError?.Invoke(ex);
         }
 
         public PlcMachinePanasonic(string portName, int baudRate, Parity parity, int dataBit, StopBits stopBits, int timeout = 5000) : this()
         {
             m_mewtocol = new Mewtocol(portName, baudRate, parity, dataBit, stopBits);
             m_mewtocol.WriteTimeout = m_mewtocol.ReadTimeout = timeout;
+            m_mewtocol.OnError += ex => OnError?.Invoke(ex);
         }
 
         private PlcMachinePanasonic()

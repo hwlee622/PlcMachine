@@ -29,6 +29,7 @@ namespace PlcUtil.PlcMachine
         {
             _wordDataDict[HOLDING_REGISTER] = new WordData(MAX_MODBUS_ADDRESS);
             _bitDataDict[COIL] = new BitData(MAX_MODBUS_ADDRESS);
+            m_modbus.OnError += ex => OnError?.Invoke(ex);
         }
 
         public override void CreateDevice()
