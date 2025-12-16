@@ -7,7 +7,8 @@ namespace UpperLinkInterface
 {
     public class Upperlink
     {
-        private UpperlinkLogWriter m_logWriter;
+        public Action<Exception> OnError;
+
         private Comm m_comm;
 
         public int WriteTimeout
@@ -24,12 +25,17 @@ namespace UpperLinkInterface
 
         public Upperlink(string portNumber, int baudRate, Parity parity, int dataBit, StopBits stopBits)
         {
-            m_logWriter = new UpperlinkLogWriter(portNumber);
-
             m_comm = new CommInterfaceSerial(portNumber, baudRate, parity, dataBit, stopBits);
             m_comm.SetSTX(Encoding.ASCII.GetBytes(new char[] { '@' }));
             m_comm.SetETX(Encoding.ASCII.GetBytes(new char[] { '*', (char)0x0D }));
-            m_comm.OnError += ex => m_logWriter.LogError(ex);
+            SetComm(m_comm);
+        }
+
+        private void SetComm(Comm comm)
+        {
+            comm.SetSTX(Encoding.ASCII.GetBytes(new char[] { '<' }));
+            comm.SetETX(Encoding.ASCII.GetBytes(new char[] { (char)0x0D }));
+            comm.OnError += ex => OnError?.Invoke(ex);
         }
 
         public void Start()
@@ -106,7 +112,7 @@ namespace UpperLinkInterface
             recvBytes = m_comm.SendReceiveMessage(sendBytes);
             if (CheckFCSError(recvBytes) || CheckReplyError(recvBytes))
             {
-                m_logWriter.Log($"SendRecv Error.\r\n{Encoding.ASCII.GetString(sendBytes)}\r\n{Encoding.ASCII.GetString(recvBytes)}");
+                OnError?.Invoke(new InvalidOperationException($"SendRecv Error.\r\n{Encoding.ASCII.GetString(sendBytes)}\r\n{Encoding.ASCII.GetString(recvBytes)}"));
                 return false;
             }
             else

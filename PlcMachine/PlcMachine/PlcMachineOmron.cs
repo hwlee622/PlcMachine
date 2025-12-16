@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MewtocolInterface;
+using System;
 using System.Collections.Generic;
 using System.IO.Ports;
 using System.Text;
@@ -25,6 +26,7 @@ namespace PlcUtil.PlcMachine
         {
             m_upperLink = new Upperlink(portName, baudRate, parity, dataBit, stopBits);
             m_upperLink.WriteTimeout = m_upperLink.ReadTimeout = timeout;
+            m_upperLink.OnError += ex => OnError?.Invoke(ex);
         }
 
         private PlcMachineOmron()

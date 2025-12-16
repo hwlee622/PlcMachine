@@ -293,6 +293,7 @@ namespace PlcUtil.PlcMachine
 
         public bool IsConnected { get; protected set; } = false;
         public Action OnDataUpdated;
+        public Action<Exception> OnError;
 
         protected readonly ScanAddressData m_scanAddressData = new ScanAddressData();
 
