@@ -131,8 +131,6 @@ namespace PlcUtil.PlcMachine
         {
             if (!GetWordAddress(address, out string key, out int index))
                 return;
-            if (m_scanAddressData.SetScanAddress(key, index, 2, SCAN_SIZE))
-                WaitScanComplete();
 
             if (value.Length % 2 != 0)
                 value += '\0';
@@ -152,8 +150,6 @@ namespace PlcUtil.PlcMachine
         {
             if (!GetWordAddress(address, out string key, out int index))
                 return;
-            if (m_scanAddressData.SetScanAddress(key, index, 2, SCAN_SIZE))
-                WaitScanComplete();
 
             ushort[] data = new ushort[] { (ushort)value };
             if (m_upperLink.SetDMData(index, 1, data))
@@ -164,8 +160,6 @@ namespace PlcUtil.PlcMachine
         {
             if (!GetWordAddress(address, out string key, out int index))
                 return;
-            if (m_scanAddressData.SetScanAddress(key, index, 2, SCAN_SIZE))
-                WaitScanComplete();
 
             ushort[] data = new ushort[2];
             data[0] = (ushort)(value & 0xFFFF);
@@ -178,8 +172,6 @@ namespace PlcUtil.PlcMachine
         {
             if (!GetWordAddress(address, out string key, out int index))
                 return;
-            if (m_scanAddressData.SetScanAddress(key, index, value.Length, SCAN_SIZE))
-                WaitScanComplete();
 
             if (m_upperLink.SetDMData(index, value.Length, value))
                 _wordDataDict[key].SetData(index, value);
