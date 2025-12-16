@@ -12,8 +12,6 @@ namespace ModbusInterface
 
         public ModbusUdp(string ip, int port) : base()
         {
-            m_logWriter = new ModbusLogWriter(ip, port);
-
             m_ipAddress = ip;
             m_port = port;
         }
