@@ -19,8 +19,6 @@ namespace ModbusInterface
 
         public ModbusTcp(string ip, int port) : base()
         {
-            m_logWriter = new ModbusLogWriter(ip, port);
-
             m_ipAddress = ip;
             m_port = port;
         }
@@ -74,7 +72,7 @@ namespace ModbusInterface
                     var exType = ex.GetType();
                     if (!m_exceptionDict.ContainsKey(exType))
                     {
-                        m_logWriter.LogError(ex);
+                        OnError?.Invoke(ex);
                         m_exceptionDict[exType] = true;
                     }
                 }
