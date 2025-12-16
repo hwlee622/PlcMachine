@@ -106,7 +106,6 @@ namespace PlcUtil.PlcMachine
         {
             if (!GetBitAddress(address, out var key, out var index))
                 return;
-            m_scanAddressData.SetScanAddress(key, index, 1, BIT_SCAN_SIZE);
 
             if (key == COIL && m_modbus.WriteCoil(index, value))
                 _bitDataDict[key].SetData(index, new bool[] { value });
@@ -158,8 +157,6 @@ namespace PlcUtil.PlcMachine
         {
             if (!GetWordAddress(address, out string key, out int index))
                 return;
-            if (m_scanAddressData.SetScanAddress(key, index, 2, WORD_SCAN_SIZE))
-                WaitScanComplete();
 
             if (value.Length % 2 != 0)
                 value += '\0';
@@ -179,8 +176,6 @@ namespace PlcUtil.PlcMachine
         {
             if (!GetWordAddress(address, out string key, out int index))
                 return;
-            if (m_scanAddressData.SetScanAddress(key, index, 2, WORD_SCAN_SIZE))
-                WaitScanComplete();
 
             ushort[] data = new ushort[] { (ushort)value };
             if (key == HOLDING_REGISTER && m_modbus.WriteHoldingRegister((ushort)index, data[0]))
@@ -191,8 +186,6 @@ namespace PlcUtil.PlcMachine
         {
             if (!GetWordAddress(address, out string key, out int index))
                 return;
-            if (m_scanAddressData.SetScanAddress(key, index, 2, WORD_SCAN_SIZE))
-                WaitScanComplete();
 
             ushort[] data = new ushort[2];
             data[0] = (ushort)(value & 0xFFFF);
@@ -205,8 +198,6 @@ namespace PlcUtil.PlcMachine
         {
             if (!GetWordAddress(address, out string key, out int index))
                 return;
-            if (m_scanAddressData.SetScanAddress(key, index, value.Length, WORD_SCAN_SIZE))
-                WaitScanComplete();
 
             if (key == HOLDING_REGISTER && m_modbus.WriteHoldingRegister((ushort)index, value))
                 _wordDataDict[key].SetData(index, value);
